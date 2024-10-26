@@ -76,7 +76,7 @@ def newsapi_parse_articles(articles: list[dict]) -> dict[str, str]:
             text = newsapi_fetch_article_text(article["url"])
             if text is None:
                 continue
-        except ConnectionError:
+        except requests.exceptions.ConnectionError:
             continue
 
         parsed_articles.append({
