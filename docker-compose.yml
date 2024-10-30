@@ -46,3 +46,13 @@ services:
       - zookeeper
     environment:
       KAFKA_BROKER: kafka:9092
+
+  scraper_worldnewsapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper_worldnewsapi
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      KAFKA_BROKER: kafka:9092
