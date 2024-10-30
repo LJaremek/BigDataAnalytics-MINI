@@ -27,7 +27,7 @@ if __name__ == "__main__":
         # response = requests.get(url)
         # articles = json.loads(response.text)["articles"]
         # parsed_articles = newsapi_parse_articles(articles)
-        parsed_articles = {"data": "SOME DATA", "date": "yesterday"}
+        parsed_articles = [{"data": "SOME DATA", "date": "yesterday"}]
 
         data = {
             "source": "scraper_news_newsapi",

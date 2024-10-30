@@ -28,7 +28,7 @@ if __name__ == "__main__":
         # news = xtb.get_news(date_start, date_end)["returnData"]
 
         # parsed_articles = xtb_parse_news(key_words, news)
-        parsed_articles = {"data": "BIG NEW!", "date": "today"}
+        parsed_articles = [{"data": "BIG NEW!", "date": "today"}]
 
         the_time = time.strftime("%Y-%d-%m %I:%M:%S")
         data = {

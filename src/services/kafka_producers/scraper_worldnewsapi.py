@@ -33,7 +33,7 @@ if __name__ == "__main__":
         # response = requests.get(url)
         # articles = json.loads(response.text)["news"]
         # parsed_articles = worldnewsapi_parse_news(articles)
-        parsed_articles = {"data": "SOME INTERESTING", "date": "tomorrow"}
+        parsed_articles = [{"data": "SOME INTERESTING", "date": "tomorrow"}]
 
         data = {
             "source": "scraper_news_worldnewsapi",

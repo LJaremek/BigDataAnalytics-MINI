@@ -1,9 +1,19 @@
 # BigDataAnalytics-MINI
 
+## How to start
+1. Install docker
+2. Build and run containers (commands below)
+3. Check what is on kafka (command below)
+
+
+## Project architecture
 ```
 .
+├── Dockerfile.scraper_news_xtb
+├── Dockerfile.scraper_newsapi
+├── Dockerfile.scraper_worldnewsapi
 ├── README.md
-└── src
+├── docker-compose.yml└── src
     ├── data_processing
     │   ├── scraping
     │   └── transformations
@@ -16,7 +26,8 @@
 ```
 
 
-# Docker
+## Commands
+### Docker
 Stopping every running container
 
 ```sh
