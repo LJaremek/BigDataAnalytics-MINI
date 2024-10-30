@@ -5,7 +5,6 @@ import os
 from kafka import KafkaProducer
 from dotenv import load_dotenv
 from xtb import XTB
-import requests
 
 from data_processing.scrapping.news_xtb import xtb_parse_news
 
@@ -14,7 +13,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     api_key = os.getenv("NEWSAPI_API_KEY")
-    key_words = ["cocoa", "Ivory Coast"]
+    key_words = ["kakao"]
 
     producer = KafkaProducer(
         bootstrap_servers=["kafka:9092"],
@@ -31,7 +30,6 @@ if __name__ == "__main__":
         date_start = "2024-10-01"  # TODO: automatyczna data
         date_end = "2024-10-25"  # TODO: automatyczna data
         news = xtb.get_news(date_start, date_end)["returnData"]
-        key_words = ["kakao"]
 
         parsed_articles = xtb_parse_news(key_words, news)
 
