@@ -1,1 +1,6 @@
+kafka-python
+python-dotenv
+requests
+
+websocket-client
 git+https://github.com/LJaremek/xtb.git

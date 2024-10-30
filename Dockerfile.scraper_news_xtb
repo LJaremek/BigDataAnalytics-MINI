@@ -1,0 +1,12 @@
+FROM python:3.10
+
+WORKDIR /app
+COPY src/requirements.txt .
+RUN python3 -m pip install -r requirements.txt
+
+COPY src/data_processing/__init__.py /app/data_processing/
+COPY src/data_processing/scraping/__init__.py /app/data_processing/scraping/
+COPY src/data_processing/scraping/news_xtb.py /app/data_processing/scraping/
+COPY src/services/kafka_producers/scraper_news_xtb.py /app/
+
+CMD ["python", "-u", "scraper_news_xtb.py"]

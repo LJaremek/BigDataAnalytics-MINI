@@ -6,7 +6,7 @@ from kafka import KafkaProducer
 from dotenv import load_dotenv
 import requests
 
-from data_processing.scrapping.worldnewsapi_news import (
+from data_processing.scraping.worldnewsapi_news import (
     worldnewsapi_generate_url, worldnewsapi_parse_news
 )
 
