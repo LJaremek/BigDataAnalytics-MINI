@@ -25,10 +25,22 @@ services:
       timeout: 10s
       retries: 10
 
+
+  # SCRAPERS
   scraper_news_xtb:
     build:
       context: .
       dockerfile: Dockerfile.scraper_news_xtb
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      KAFKA_BROKER: kafka:9092
+
+  scraper_newsapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper_newsapi
     depends_on:
       - kafka
       - zookeeper

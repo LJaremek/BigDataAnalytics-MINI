@@ -6,8 +6,8 @@ RUN python3 -m pip install -r requirements.txt
 
 COPY src/data_processing/__init__.py /app/data_processing/
 COPY src/data_processing/scraping/__init__.py /app/data_processing/scraping/
-COPY src/data_processing/scraping/news_xtb.py /app/data_processing/scraping/
-COPY src/services/kafka_producers/scraper_news_xtb.py /app/
+COPY src/data_processing/scraping/news_newsapi.py /app/data_processing/scraping/
+COPY src/services/kafka_producers/scraper_newsapi.py /app/
 COPY src/services/kafka_producers/tools.py /app/
 
-CMD ["python", "-u", "scraper_news_xtb.py"]
+CMD ["python", "-u", "scraper_newsapi.py"]
