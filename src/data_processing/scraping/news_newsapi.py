@@ -22,6 +22,8 @@ def newsapi_generate_url(key_words: list[str], api_key: str) -> str:
         for word in key_words
     ]
 
+    # TODO: dodać wybór daty do generowania url
+
     url = "https://newsapi.org/v2/everything?q="
     url += "%20AND%20".join(key_words)
     url += "&searchIn=content&language=en&apiKey="
