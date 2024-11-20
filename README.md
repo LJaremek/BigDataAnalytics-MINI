@@ -13,7 +13,8 @@
 ├── Dockerfile.scraper_newsapi
 ├── Dockerfile.scraper_worldnewsapi
 ├── README.md
-├── docker-compose.yml└── src
+├── docker-compose.yml
+└── src
     ├── data_processing
     │   ├── scraping
     │   └── transformations
