@@ -55,3 +55,9 @@ Getting info from kafka
 ```sh
 docker exec -it bigdataanalytics-mini-kafka-1 kafka-console-consumer --bootstrap-server localhost:9092 --topic scraped_data --from-beginning
 ```
+
+
+Checking docker pod logs:
+```sh
+docker logs \<IMAGE NAME\>
+```
