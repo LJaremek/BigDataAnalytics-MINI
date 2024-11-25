@@ -73,6 +73,18 @@ services:
     networks:
       - kafka
 
+  scraper_stock:
+    build:
+      context: .
+      dockerfile: Dockerfile.sraper_stock_xtb
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
+
   # CONSUMERS
   consumer_batch:
     build:
