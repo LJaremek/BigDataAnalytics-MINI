@@ -22,12 +22,12 @@ if __name__ == "__main__":
 
     while True:
         # TODO: dodać wybór daty do generowania url
-        # url = newsapi_generate_url(key_words, api_key)
+        url = newsapi_generate_url(key_words, api_key)
 
         # response = requests.get(url)
         # articles = json.loads(response.text)["articles"]
         # parsed_articles = newsapi_parse_articles(articles)
-        parsed_articles = [{"data": "SOME DATA", "date": "yesterday"}]
+        parsed_articles = [{"data": "SOME DATA", "date": "2024-11-24"}]
 
         data = {
             "source": "scraper_news_newsapi",

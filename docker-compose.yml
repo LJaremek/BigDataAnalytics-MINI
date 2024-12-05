@@ -35,7 +35,6 @@ services:
       timeout: 10s
       retries: 10
 
-
   # SCRAPERS
   scraper_news_xtb:
     build:
@@ -76,7 +75,7 @@ services:
   scraper_stock:
     build:
       context: .
-      dockerfile: Dockerfile.sraper_stock_xtb
+      dockerfile: Dockerfile.scraper_stock_xtb
     depends_on:
       - kafka
       - zookeeper
@@ -91,29 +90,31 @@ services:
       context: .
       dockerfile: Dockerfile.consumer_batch
     depends_on:
-      - kafka
-      - zookeeper
-      - namenode
-      - datanode
+      kafka:
+        condition: service_started
+      zookeeper:
+        condition: service_started
+      namenode:
+        condition: service_healthy
     environment:
       KAFKA_BROKER: kafka:9092
     networks:
       - hadoop
       - kafka
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://namenode:9870 || exit 1 && nc -z kafka 9092 || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://namenode:50070 || exit 1 && nc -z kafka 9092 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   # HDFS - NameNode
   namenode:
-    build:
-      context: .
-      dockerfile: Dockerfile.namenode
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
     container_name: namenode
     environment:
       CLUSTER_NAME: hadoop_cluster
+      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      HDFS_CONF_dfs_webhdfs_enabled: "true"
     volumes:
       - namenode_data:/hadoop/dfs/name
     ports:
@@ -123,20 +124,19 @@ services:
     networks:
       - hadoop
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://namenode:9870"]
+      test: ["CMD", "curl", "-f", "http://namenode:50070"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   # HDFS - DataNode
   datanode:
-    build:
-      context: .
-      dockerfile: Dockerfile.datanode
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
     container_name: datanode
     environment:
       CLUSTER_NAME: hadoop_cluster
-      NAMENODE_HOST: namenode
+      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      HDFS_CONF_dfs_namenode_rpc-address: namenode:9000
     volumes:
       - datanode_data:/hadoop/dfs/data
     ports:

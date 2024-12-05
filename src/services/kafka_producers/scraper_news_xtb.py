@@ -23,12 +23,12 @@ if __name__ == "__main__":
         # )
         # xtb.login()
 
-        date_start = "2024-10-01"  # TODO: automatyczna data
-        date_end = "2024-10-25"  # TODO: automatyczna data
+        date_start = "2024-11-01"  # TODO: automatyczna data
+        date_end = "2024-11-25"  # TODO: automatyczna data
         # news = xtb.get_news(date_start, date_end)["returnData"]
 
         # parsed_articles = xtb_parse_news(key_words, news)
-        parsed_articles = [{"data": "BIG NEW!", "date": "today"}]
+        parsed_articles = [{"data": "BIG NEW!", "date": "2024-11-22"}]
 
         the_time = time.strftime("%Y-%d-%m %I:%M:%S")
         data = {

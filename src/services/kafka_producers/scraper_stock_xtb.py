@@ -1,7 +1,5 @@
 import time
-import os
 
-from kafka import KafkaProducer
 from dotenv import load_dotenv
 from xtb import XTB
 
