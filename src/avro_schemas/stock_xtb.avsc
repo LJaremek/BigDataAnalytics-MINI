@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "stock_xtb",
+  "namespace": "bigdata.avro",
+  "fields": [
+    {"name": "ctm", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "ctmString", "type": "string"},
+    {"name": "open", "type": "float"},
+    {"name": "close", "type": "float"},
+    {"name": "high", "type": "float"},
+    {"name": "low", "type": "float"},
+    {"name": "vol", "type": "float"}
+  ]
+}

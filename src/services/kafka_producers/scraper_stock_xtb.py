@@ -20,8 +20,8 @@ if __name__ == "__main__":
     while True:
         date_start = "2024-11-22"
         date_end = "2024-11-25"
-        # stock_data = xtb.get_chart_range_request(date_start, date_end, "COCOA", "H1")["returnData"]["rateInfos"]
-        stock_data = [
+        # candlesticks = xtb.get_chart_range_request(date_start, date_end, "COCOA", "H1")["returnData"]["rateInfos"]
+        candlesticks = [
             {'ctm': 1732266000000, 'ctmString': 'Nov 22, 2024, 10:00:00 AM', 'open': 8714.0, 'close': -17.0, 'high': 0.0, 'low': -35.0, 'vol': 1157.0},
             {'ctm': 1732269600000, 'ctmString': 'Nov 22, 2024, 11:00:00 AM', 'open': 8698.0, 'close': 21.0, 'high': 59.0, 'low': -5.0, 'vol': 3904.0},
             {'ctm': 1732273200000, 'ctmString': 'Nov 22, 2024, 12:00:00 PM', 'open': 8721.0, 'close': 112.0, 'high': 117.0, 'low': -7.0, 'vol': 4241.0},
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
         data = {
             "source": "scraper_stock_xtb",
-            "stock": stock_data,
+            "candlesticks": candlesticks,
             "time": time.strftime("%Y-%d-%m %I:%M:%S")
         }
 

@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "news_newsapi",
+  "namespace": "bigdata.avro",
+  "fields": [
+    {"name": "date", "type": "string"},
+    {"name": "data", "type": "string"}
+  ]
+}

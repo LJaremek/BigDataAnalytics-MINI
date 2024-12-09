@@ -12,5 +12,6 @@ COPY src/data_processing/scraping/__init__.py /app/data_processing/scraping/
 COPY src/data_processing/scraping/news_newsapi.py /app/data_processing/scraping/
 COPY src/services/kafka_producers/scraper_newsapi.py /app/
 COPY src/services/kafka_producers/tools.py /app/
+COPY src/services/producers_mock_data/newsapi.json /app/
 
 CMD ["python", "-u", "scraper_newsapi.py"]

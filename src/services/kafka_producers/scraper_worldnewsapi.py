@@ -33,13 +33,16 @@ if __name__ == "__main__":
         # response = requests.get(url)
         # articles = json.loads(response.text)["news"]
         # parsed_articles = worldnewsapi_parse_news(articles)
-        parsed_articles = [{"data": "SOME INTERESTING", "date": "2024-11-25"}]
 
-        data = {
-            "source": "scraper_news_worldnewsapi",
-            "news": parsed_articles,
-            "time": time.strftime("%Y-%d-%m %I:%M:%S")
-        }
+        # data = {
+        #     "source": "scraper_news_worldnewsapi",
+        #     "news": parsed_articles,
+        #     "time": time.strftime("%Y-%d-%m %I:%M:%S")
+        # }
+
+        with open("worldnewsapi.json", "r") as file:
+            content = file.read().replace("\\", "")
+        data = json.loads(rf"{content}")
 
         producer.send("scraped_data", value=data)
 

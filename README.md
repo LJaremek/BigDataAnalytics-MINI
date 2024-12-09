@@ -9,8 +9,11 @@
 ## Project architecture
 ```
 .
+├── Dockerfile.consumer_batch
+├── Dockerfile.datanode
 ├── Dockerfile.scraper_news_xtb
 ├── Dockerfile.scraper_newsapi
+├── Dockerfile.scraper_stock_xtb
 ├── Dockerfile.scraper_worldnewsapi
 ├── README.md
 ├── docker-compose.yml└── src

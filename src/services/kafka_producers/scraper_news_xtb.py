@@ -1,3 +1,4 @@
+import json
 import time
 import os
 
@@ -28,17 +29,18 @@ if __name__ == "__main__":
         # news = xtb.get_news(date_start, date_end)["returnData"]
 
         # parsed_articles = xtb_parse_news(key_words, news)
-        parsed_articles = [{"data": "BIG NEW!", "date": "2024-11-22"}]
 
-        the_time = time.strftime("%Y-%d-%m %I:%M:%S")
-        data = {
-            "source": "scraper_news_xtb",
-            "news": parsed_articles,
-            "time": the_time
-        }
+        # the_time = time.strftime("%Y-%d-%m %I:%M:%S")
+        # data = {
+        #     "source": "scraper_news_xtb",
+        #     "news": parsed_articles,
+        #     "time": the_time
+        # }
+
+        with open("xtb.json", "r") as file:
+            data = json.loads(file.read())
 
         producer.send("scraped_data", value=data)
-        print("New data:", the_time)
 
         # time.sleep(15*60)
         time.sleep(10)

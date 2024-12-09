@@ -9,18 +9,9 @@ COPY .env /app/
 
 COPY src/services/kafka_consumers/kafka_to_hadoop_batch.py /app/
 COPY src/services/kafka_consumers/tools.py /app/
-
-# RUN apt-get update && apt-get install -y wget openjdk-17-jdk && \
-#     wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz && \
-#     tar -xzvf hadoop-3.3.6.tar.gz && \
-#     mv hadoop-3.3.6 /usr/local/hadoop && \
-#     rm hadoop-3.3.6.tar.gz && \
-#     echo 'export PATH=$PATH:/usr/local/hadoop/bin' >> /etc/profile && \
-#     echo 'export HADOOP_HOME=/usr/local/hadoop' >> /etc/profile && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY src/avro_schemas/ /app/avro_schemas
 
 ENV HADOOP_HOME /usr/local/hadoop
 ENV PATH $PATH:/usr/local/hadoop/bin
 
-# CMD ["python", "-c", "while True: print('Hello World')"]
 CMD ["python", "-u", "kafka_to_hadoop_batch.py"]
