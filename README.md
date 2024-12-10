@@ -4,6 +4,7 @@
 1. Install docker
 2. Build and run containers (commands below)
 3. Check what is on kafka (command below)
+4. Check files on the HDFS
 
 
 ## Project architecture
@@ -18,13 +19,15 @@
 ├── README.md
 ├── docker-compose.yml
 └── src
+    ├── avro_schemas                <- schemas of avro files for HDFS
     ├── data_processing
-    │   ├── scraping
+    │   ├── scraping                <- code for scraping
     │   └── transformations
     ├── models
     ├── services
-    │   ├── kafka_consumers
-    │   └── kafka_producers
+    │   ├── kafka_consumers         <- kafka consumers (for batch preparing)
+    │   ├── kafka_producers         <- kafka producers (scrappers)
+    │   └── producers_mock_data     <- mock data for producers testing
     ├── tests
     └── requirements.txt
 ```
