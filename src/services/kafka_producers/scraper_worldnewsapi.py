@@ -2,7 +2,6 @@ import json
 import time
 import os
 
-from kafka import KafkaProducer
 from dotenv import load_dotenv
 import requests
 
@@ -21,8 +20,9 @@ if __name__ == "__main__":
     producer = get_kafka_producer()
 
     while True:
-        start_date = "2024-10-15"  # TODO: automatyczna data
-        end_date = "2024-10-18"  # TODO: automatyczna data
+        # INFO: max 30 days old
+        start_date = "2024-11-15"  # TODO: automatyczna data
+        end_date = "2024-11-18"  # TODO: automatyczna data
 
         # url = worldnewsapi_generate_url(
         #     key_word, api_key,
@@ -33,13 +33,16 @@ if __name__ == "__main__":
         # response = requests.get(url)
         # articles = json.loads(response.text)["news"]
         # parsed_articles = worldnewsapi_parse_news(articles)
-        parsed_articles = [{"data": "SOME INTERESTING", "date": "tomorrow"}]
 
-        data = {
-            "source": "scraper_news_worldnewsapi",
-            "news": parsed_articles,
-            "time": time.strftime("%Y-%d-%m %I:%M:%S")
-        }
+        # data = {
+        #     "source": "scraper_news_worldnewsapi",
+        #     "news": parsed_articles,
+        #     "time": time.strftime("%Y-%d-%m %I:%M:%S")
+        # }
+
+        with open("worldnewsapi.json", "r") as file:
+            content = file.read().replace("\\", "")
+        data = json.loads(rf"{content}")
 
         producer.send("scraped_data", value=data)
 

@@ -1,0 +1,15 @@
+FROM bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+
+# Dodanie konfiguracji w hdfs-site.xml
+RUN sed -i '/<\/configuration>/i \
+<property><name>dfs.datanode.data.dir</name><value>file:///hadoop/dfs/data</value></property>\n\
+<property><name>dfs.namenode.rpc-address</name><value>namenode:9000</value></property>\n\
+<property><name>dfs.client.use.datanode.hostname</name><value>true</value></property>\n\
+<property><name>dfs.datanode.use.datanode.hostname</name><value>true</value></property>' /opt/hadoop-2.7.4/etc/hadoop/hdfs-site.xml
+
+# Dodanie konfiguracji w core-site.xml
+RUN sed -i '/<\/configuration>/i \
+<property><name>fs.defaultFS</name><value>hdfs://namenode:9000</value></property>' /opt/hadoop-2.7.4/etc/hadoop/core-site.xml
+
+# Eksponowanie portów DataNode
+EXPOSE 9864

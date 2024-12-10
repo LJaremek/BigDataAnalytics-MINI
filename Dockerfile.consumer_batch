@@ -1,0 +1,17 @@
+FROM python:3.10
+
+WORKDIR /app
+
+COPY src/requirements.txt .
+RUN python3 -m pip install -r requirements.txt
+
+COPY .env /app/
+
+COPY src/services/kafka_consumers/kafka_to_hadoop_batch.py /app/
+COPY src/services/kafka_consumers/tools.py /app/
+COPY src/avro_schemas/ /app/avro_schemas
+
+ENV HADOOP_HOME /usr/local/hadoop
+ENV PATH $PATH:/usr/local/hadoop/bin
+
+CMD ["python", "-u", "kafka_to_hadoop_batch.py"]

@@ -1,3 +1,9 @@
+networks:
+  hadoop:
+    driver: bridge
+  kafka:
+    driver: bridge
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -5,11 +11,15 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "2181:2181"
+    networks:
+      - kafka
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     ports:
       - "9092:9092"
+    networks:
+      - kafka
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
@@ -25,7 +35,6 @@ services:
       timeout: 10s
       retries: 10
 
-
   # SCRAPERS
   scraper_news_xtb:
     build:
@@ -36,6 +45,8 @@ services:
       - zookeeper
     environment:
       KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
 
   scraper_newsapi:
     build:
@@ -46,6 +57,8 @@ services:
       - zookeeper
     environment:
       KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
 
   scraper_worldnewsapi:
     build:
@@ -56,3 +69,83 @@ services:
       - zookeeper
     environment:
       KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
+
+  scraper_stock:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper_stock_xtb
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
+
+  # CONSUMERS
+  consumer_batch:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer_batch
+    depends_on:
+      kafka:
+        condition: service_started
+      zookeeper:
+        condition: service_started
+      namenode:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - hadoop
+      - kafka
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://namenode:50070 || exit 1 && nc -z kafka 9092 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # HDFS - NameNode
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: namenode
+    environment:
+      CLUSTER_NAME: hadoop_cluster
+      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      HDFS_CONF_dfs_webhdfs_enabled: "true"
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+    ports:
+      - "9870:9870"  # Web UI port
+      - "50070:50070"  # Mapowanie portu Web UI
+      - "9000:9000"  # Namenode communication port
+    networks:
+      - hadoop
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://namenode:50070"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # HDFS - DataNode
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: datanode
+    environment:
+      CLUSTER_NAME: hadoop_cluster
+      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      HDFS_CONF_dfs_namenode_rpc-address: namenode:9000
+    volumes:
+      - datanode_data:/hadoop/dfs/data
+    ports:
+      - "9864:9864"  # Web UI port
+    networks:
+      - hadoop
+    depends_on:
+      - namenode
+
+volumes:
+  namenode_data:
+  datanode_data:

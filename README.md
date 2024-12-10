@@ -9,8 +9,11 @@
 ## Project architecture
 ```
 .
+├── Dockerfile.consumer_batch
+├── Dockerfile.datanode
 ├── Dockerfile.scraper_news_xtb
 ├── Dockerfile.scraper_newsapi
+├── Dockerfile.scraper_stock_xtb
 ├── Dockerfile.scraper_worldnewsapi
 ├── README.md
 ├── docker-compose.yml
@@ -55,4 +58,10 @@ Getting info from kafka
 
 ```sh
 docker exec -it bigdataanalytics-mini-kafka-1 kafka-console-consumer --bootstrap-server localhost:9092 --topic scraped_data --from-beginning
+```
+
+
+Checking docker pod logs:
+```sh
+docker logs \<IMAGE NAME\>
 ```

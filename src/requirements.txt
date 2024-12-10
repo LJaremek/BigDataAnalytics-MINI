@@ -1,4 +1,6 @@
 beautifulsoup4
+fastavro
+hdfs
 kafka-python
 python-dotenv
 requests
