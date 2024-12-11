@@ -1,4 +1,4 @@
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient
 
 
 def initialize_collections() -> None:
@@ -7,9 +7,11 @@ def initialize_collections() -> None:
 
     if "scraper_weather_openmeteo_logs" not in db.list_collection_names():
         db.create_collection("scraper_weather_openmeteo_logs", capped=False)
-        db.scraper_weather_openmeteo_logs.create_index("start_date", unique=False)
-        db.scraper_weather_openmeteo_logs.create_index("end_date", unique=False)
-        db.scraper_weather_openmeteo_logs.create_index("record_count", unique=False)
+        collection = db["scraper_weather_openmeteo_logs"]
+
+        collection.create_index("start_date", unique=False)
+        collection.create_index("end_date", unique=False)
+        collection.create_index("record_count", unique=False)
 
     print("Collections and indexes have been initialized.")
     client.close()

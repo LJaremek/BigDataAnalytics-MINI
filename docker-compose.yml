@@ -136,6 +136,19 @@ services:
       KAFKA_BROKER: kafka:9092
     networks:
       - kafka
+    
+  scraper_weather_openmeteo:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper_weather_openmeteo
+    depends_on:
+      - kafka
+      - zookeeper
+      - mongodb
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
 
   # CONSUMERS
   consumer_batch:

@@ -1,0 +1,17 @@
+FROM python:3.10
+
+WORKDIR /app
+
+COPY src/requirements.txt .
+RUN python3 -m pip install -r requirements.txt
+
+COPY .env /app/
+
+COPY src/data_processing/__init__.py /app/data_processing/
+COPY src/data_processing/scraping/__init__.py /app/data_processing/scraping/
+COPY src/data_processing/scraping/weather_openmeteo.py /app/data_processing/scraping/
+COPY src/services/kafka_producers/scraper_weather_openmeteo.py /app/
+COPY src/services/kafka_producers/tools.py /app/
+COPY src/services/kafka_producers/mongodb_logging.py /app/
+
+CMD ["python", "-u", "scraper_weather_openmeteo.py"]

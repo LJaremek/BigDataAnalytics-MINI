@@ -50,7 +50,7 @@ def generate_forecast_url(
     return url
 
 
-def get_cocoa_weather(
+def get_weather(
         start_date: str,
         end_date: str,
         resource: str
@@ -115,10 +115,10 @@ def generate_date_range(start_date: str, end_date: str) -> list[str]:
     """
     start = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
-    
+
     if start > end:
         raise ValueError("'start_date' must not be after 'end_date'.")
-    
+
     date_list = [
         (start + timedelta(days=i)).strftime("%Y-%m-%d")
         for i in range((end - start).days + 1)
@@ -127,7 +127,7 @@ def generate_date_range(start_date: str, end_date: str) -> list[str]:
     return date_list
 
 
-def get_cocoa_weathers(
+def get_weathers(
         start_date: str,
         end_date: str,
         resource: str
@@ -136,7 +136,7 @@ def get_cocoa_weathers(
 
     results = []
     for end_date in dates:
-        results.append(get_cocoa_weather(start_date, end_date, resource))
+        results.append(get_weather(start_date, end_date, resource))
         start_date = end_date
 
     return results
@@ -146,4 +146,4 @@ if __name__ == "__main__":
     start_date = "2024-11-10"
     end_date = "2024-11-25"
 
-    print(get_cocoa_weathers(start_date, end_date, "cocoa"))
+    print(get_weathers(start_date, end_date, "cocoa"))

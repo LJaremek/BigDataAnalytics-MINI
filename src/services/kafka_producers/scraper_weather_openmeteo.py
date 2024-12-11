@@ -1,30 +1,31 @@
-import json
 import time
 
-from data_processing.scraping.weather_openmeteo import get_cocoa_weather
+from mongodb_logging import get_last_scraper_end_date, add_new_scraper_log
+from data_processing.scraping.weather_openmeteo import get_weather
+from tools import get_date_one_month_ago, add_n_days
 from tools import get_kafka_producer
 
+SCRAPER_NAME = "scraper_weather_openmeteo"
 
 if __name__ == "__main__":
     producer = get_kafka_producer()
 
-    while True:
-        date_start = "2024-11-01"  # TODO: automatyczna data
-        date_end = "2024-11-25"  # TODO: automatyczna data
-        
-        # parsed_articles = xtb_parse_news(key_words, news)
+    last_end_date = get_last_scraper_end_date(SCRAPER_NAME)
 
-        # the_time = time.strftime("%Y-%d-%m %I:%M:%S")
-        # data = {
-        #     "source": "scraper_news_xtb",
-        #     "news": parsed_articles,
-        #     "time": the_time
-        # }
+    if last_end_date is None:
+        date_start = get_date_one_month_ago()
+    else:
+        date_start = last_end_date
+    date_end = add_n_days(date_start, 1)
 
-        with open("xtb.json", "r") as file:
-            data = json.loads(file.read())
+    weather = get_weather(date_start, date_end, "cocoa")
+    the_time = time.strftime("%Y-%d-%m %I:%M:%S")
+    data = {
+        "source": SCRAPER_NAME,
+        "weather": [weather],
+        "time": the_time
+    }
 
-        producer.send("scraped_data", value=data)
+    producer.send("scraped_data", value=data)
 
-        # time.sleep(15*60)
-        time.sleep(10)
+    add_new_scraper_log(SCRAPER_NAME, date_start, date_end, 1)

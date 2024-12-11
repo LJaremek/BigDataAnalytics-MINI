@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 import time
 
@@ -16,7 +17,7 @@ def __create_kafka_producer() -> KafkaProducer:
             return producer
         except Exception as e:
             print(f"Kafka connection attempt {i + 1} failed: {e}")
-            time.sleep(3)
+            time.sleep(5)
 
     raise Exception("Failed to connect to Kafka after multiple attempts")
 
@@ -29,3 +30,21 @@ def get_kafka_producer() -> KafkaProducer:
     if _producer is None:
         _producer = __create_kafka_producer()
     return _producer
+
+
+def get_date_one_month_ago() -> str:
+    today = datetime.today()
+    one_month_ago = today - timedelta(days=30)
+    return one_month_ago.strftime("%Y-%m-%d")
+
+
+def subtract_n_days(date_string: str, days: int) -> str:
+    date_object = datetime.strptime(date_string, "%Y-%m-%d")
+    new_date = date_object - timedelta(days=days)
+    return new_date.strftime("%Y-%m-%d")
+
+
+def add_n_days(date_string: str, days: int) -> str:
+    date_object = datetime.strptime(date_string, "%Y-%m-%d")
+    new_date = date_object + timedelta(days=days)
+    return new_date.strftime("%Y-%m-%d")
