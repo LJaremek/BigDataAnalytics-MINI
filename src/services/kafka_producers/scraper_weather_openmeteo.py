@@ -1,9 +1,9 @@
 import time
 
 from mongodb_logging import get_last_scraper_end_date, add_new_scraper_log
+from tools import get_kafka_producer, get_date_one_month_ago, add_n_days
 from data_processing.scraping.weather_openmeteo import get_weather
-from tools import get_date_one_month_ago, add_n_days
-from tools import get_kafka_producer
+
 
 SCRAPER_NAME = "scraper_weather_openmeteo"
 

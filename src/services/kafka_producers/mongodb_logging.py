@@ -15,7 +15,7 @@ def get_last_scraper_end_date(scraper_name: str) -> str | None:
 
     latest_record = collection.find_one(sort=[("end_date", -1)])
     client.close()
-    
+
     if latest_record is not None:
         return str(latest_record["end_date"])
     return None

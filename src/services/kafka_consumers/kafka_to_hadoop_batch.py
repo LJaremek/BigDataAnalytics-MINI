@@ -19,6 +19,13 @@ def create_dir_if_not_exists(
         hdfs_client.makedirs(hdfs_directory)
 
 
+def is_safemode_on():
+    import requests
+    url = "http://namenode:50070/safemode"  # Adres WebHDFS NameNode
+    response = requests.get(url)
+    return response.text.lower().strip() == "on"
+
+
 if __name__ == "__main__":
     load_dotenv()
 
@@ -29,6 +36,7 @@ if __name__ == "__main__":
 
     kafka_consumer = get_kafka_consumer("batch")
 
+    print("SAFE MODE:", is_safemode_on())
     batches: dict[str, Batch] = {}
     while True:
         for message in kafka_consumer:
@@ -48,6 +56,10 @@ if __name__ == "__main__":
                 print(f"New '{source}' batch! Records: {batches[source].size}")
                 the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
                 hdfs_path = f"/data/batch_{source}/{the_time}.avro"
+
+                if is_safemode_on():
+                    print("SAFE MODE IS ON")
+                    time.sleep(10)
 
                 with hdfs_client.write(hdfs_path, encoding=None) as w_output:
                     schema = AVRO_SCHEMAS[source]

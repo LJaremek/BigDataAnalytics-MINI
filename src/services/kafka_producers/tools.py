@@ -32,19 +32,33 @@ def get_kafka_producer() -> KafkaProducer:
     return _producer
 
 
-def get_date_one_month_ago() -> str:
+def get_date_one_month_ago(date_format: str = "%Y-%m-%d") -> str:
     today = datetime.today()
     one_month_ago = today - timedelta(days=30)
-    return one_month_ago.strftime("%Y-%m-%d")
+    return one_month_ago.strftime(date_format)
 
 
-def subtract_n_days(date_string: str, days: int) -> str:
-    date_object = datetime.strptime(date_string, "%Y-%m-%d")
+def subtract_n_days(
+        date_string: str,
+        days: int,
+        date_format: str = "%Y-%m-%d"
+        ) -> str:
+    date_object = datetime.strptime(date_string, date_format)
     new_date = date_object - timedelta(days=days)
-    return new_date.strftime("%Y-%m-%d")
+    return new_date.strftime(date_format)
 
 
-def add_n_days(date_string: str, days: int) -> str:
-    date_object = datetime.strptime(date_string, "%Y-%m-%d")
+def add_n_days(
+        date_string: str,
+        days: int,
+        date_format: str = "%Y-%m-%d"
+        ) -> str:
+    date_object = datetime.strptime(date_string, date_format)
     new_date = date_object + timedelta(days=days)
-    return new_date.strftime("%Y-%m-%d")
+    return new_date.strftime(date_format)
+
+
+def add_n_minutes(datetime_string: str, minutes: int) -> str:
+    datetime_object = datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S")
+    new_datetime = datetime_object + timedelta(minutes=minutes)
+    return new_datetime.strftime("%Y-%m-%dT%H:%M:%S")
