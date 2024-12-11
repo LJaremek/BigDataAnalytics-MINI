@@ -1,0 +1,9 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+RUN pip install pymongo
+
+COPY src/services/mongodb/init_mongo.py .
+
+CMD ["python", "-u", "init_mongo.py"]
