@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "weather_openmeteo",
+  "namespace": "bigdata.avro",
+  "fields": [
+    {"name": "temperature", "type": "float"},
+    {"name": "rain", "type": "float"},
+    {"name": "sun", "type": "float"}
+  ]
+}
