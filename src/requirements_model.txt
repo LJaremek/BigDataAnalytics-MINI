@@ -1,5 +1,7 @@
 fastapi
 fastavro
 hdfs
+numpy
 pandas
-pytorch
+torch
+scikit-learn
