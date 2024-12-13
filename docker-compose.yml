@@ -212,6 +212,19 @@ services:
     depends_on:
       - namenode
 
+  model_api:
+    build:
+      context: .
+      dockerfile: Dockerfile.model_api
+    ports:
+      - "8000:8000"
+    networks:
+      - hadoop
+      - kafka
+    depends_on:
+      - namenode
+      - datanode
+
 volumes:
   namenode_data:
   datanode_data:

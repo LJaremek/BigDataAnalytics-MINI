@@ -1,0 +1,5 @@
+fastapi
+fastavro
+hdfs
+pandas
+pytorch
