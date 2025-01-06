@@ -37,6 +37,7 @@ if __name__ == "__main__":
         with open("newsapi.json", "r") as file:
             content = file.read().replace("\\", "")
         data = json.loads(rf"{content}")
+        data["time"] = time.strftime("%Y-%d-%m %I:%M:%S")
 
         producer.send("scraped_data", value=data)
 

@@ -39,7 +39,8 @@ if __name__ == "__main__":
 
         with open("xtb.json", "r") as file:
             data = json.loads(file.read())
-
+            
+        data["time"] = time.strftime("%Y-%d-%m %I:%M:%S")
         producer.send("scraped_data", value=data)
 
         # time.sleep(15*60)
