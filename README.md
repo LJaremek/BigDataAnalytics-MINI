@@ -90,3 +90,6 @@ List files:
 ```sh
 hdfs dfs -ls /
 ```
+
+### Mongo DB
+http://localhost:8081

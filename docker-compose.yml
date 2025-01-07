@@ -162,6 +162,8 @@ services:
         condition: service_started
       namenode:
         condition: service_healthy
+      datanode:
+        condition: service_healthy
     environment:
       KAFKA_BROKER: kafka:9092
     networks:

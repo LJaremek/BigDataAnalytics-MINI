@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     hdfs_client = InsecureClient("http://namenode:50070", user="root")
     create_dir_if_not_exists(hdfs_client, "/data")
+    create_dir_if_not_exists(hdfs_client, "/eda_tmp")
 
     kafka_consumer = get_kafka_consumer("batch")
 
@@ -48,6 +49,16 @@ if __name__ == "__main__":
             if source not in batches:
                 batches[source] = Batch()
             batches[source].append(new_record)
+
+            # TMP
+            from random import randint
+            the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
+            hdfs_path = f"/eda_tmp/{source}/{the_time}_{randint(10, 99)}.avro"
+            with hdfs_client.write(hdfs_path, encoding=None) as w_output:
+                schema = AVRO_SCHEMAS[source]
+                avro_data = batches[source].records
+                writer(w_output, schema, avro_data)
+            # TMP
 
             batch_size = batches[source].size
             batch_limit = BATCH_LIMITS[source.split("_")[1]]

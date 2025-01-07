@@ -4,7 +4,9 @@ import pandas as pd
 import torch
 
 from tools import prepare_dataframe_with_datetime
+from tools import get_date_one_month_ago, add_n_days
 from model_tools import load_model_from_hdfs, save_model_to_hdfs, train_model
+from mongodb_logging import get_last_model_log, add_new_model_log
 
 app = FastAPI()
 
@@ -65,11 +67,16 @@ async def train(start_time: str = None, end_time: str = None):
 
 
 @app.post("/predict/")
-async def predict(hdfs_file: str, sequence_length: int = 10, num_predictions: int = 1):
+async def predict(
+        hdfs_file: str,
+        sequence_length: int = 10,
+        num_predictions: int = 1
+        ) -> dict:
     """
     Generuje prognozy "open" na podstawie całej historii dla kolejnych dni.
     :param hdfs_file: Ścieżka do pliku Avro na HDFS.
-    :param sequence_length: Długość sekwencji historycznej używanej do przewidywania.
+    :param sequence_length: Długość sekwencji historycznej używanej
+        do przewidywania.
     :param num_predictions: Liczba kolejnych prognoz do wygenerowania.
     """
     data = prepare_dataframe_with_datetime(hdfs_client, hdfs_file)
@@ -81,7 +88,8 @@ async def predict(hdfs_file: str, sequence_length: int = 10, num_predictions: in
     if len(X) < sequence_length:
         return {"message": "Not enough data to form a sequence."}
 
-    sequence = X[-sequence_length:].unsqueeze(0)  # [1, sequence_length, num_features]
+    # [1, sequence_length, num_features]
+    sequence = X[-sequence_length:].unsqueeze(0)
 
     predictions = []
 

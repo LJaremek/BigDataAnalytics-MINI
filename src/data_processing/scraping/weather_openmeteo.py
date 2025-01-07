@@ -56,6 +56,9 @@ def get_weather(
         resource: str
         ) -> dict[str, float]:
 
+    assert len(start_date) == len("YYYY-MM-DD")
+    assert len(end_date) == len("YYYY-MM-DD")
+
     results = {
         "temperature": [],
         "rain": [],
@@ -79,6 +82,7 @@ def get_weather(
                 latitude, longitude, DAILY_PARAMETERS, start_date, end_date
                 )
             response = requests.get(url)
+            print(start_date, end_date, json.loads(response.text))
             data = json.loads(response.text)["daily"]
 
             min_temp = data["temperature_2m_min"][0]
