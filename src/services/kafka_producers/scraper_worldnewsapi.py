@@ -34,9 +34,11 @@ if __name__ == "__main__":
         date_start = get_date_one_month_ago(DATE_FORMAT)
     else:
         date_start = last_end_date
-    date_end = add_n_minutes(date_start, MINUTES)
+    print("[START]", date_start)
+    date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
 
     while True:
+        print("Time:", date_start, date_end)
         if not DEBUG_MODE:
             url = worldnewsapi_generate_url(
                 key_word, api_key,
@@ -64,6 +66,6 @@ if __name__ == "__main__":
         add_new_scraper_log(SCRAPER_NAME, date_start, date_end, count)
 
         date_start = date_end
-        date_end = add_n_minutes(date_start, MINUTES)
+        date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
 
         time.sleep(MINUTES)

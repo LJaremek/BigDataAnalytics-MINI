@@ -35,10 +35,10 @@ if __name__ == "__main__":
         date_start = get_date_one_month_ago(DATE_FORMAT)
     else:
         date_start = last_end_date
-    date_end = add_n_minutes(date_start, MINUTES)
+    date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
 
-    # TODO: na produkcji usunąć 'while True' i zrobić cron-job
     while True:
+        print("Time:", date_start, date_end)
         if not DEBUG_MODE:
             url = newsapi_generate_url(
                 key_words, date_start, date_end, api_key

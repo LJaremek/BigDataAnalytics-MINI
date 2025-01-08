@@ -19,25 +19,20 @@ model = load_model_from_hdfs(hdfs_client, model_path)
 dataframe = prepare_dataframe_with_datetime(hdfs_client, hdfs_stock_folder)
 
 
+def prepare_dataframe(hdfs_client, start_time, end_time):
+    ...
+
+
 @app.post("/train/")
-async def train(start_time: str = None, end_time: str = None):
+async def train(start_time: str, end_time: str,) -> dict:
     """
-    Trenuje model LSTM na danych Avro z podanego zakresu dat.
-    :param start_time: Początkowa data w formacie `YYYY-MM-DD HH:MM:SS`.
-    :param end_time: Końcowa data w formacie `YYYY-MM-DD HH:MM:SS`.
+    Trains the LSTM model on Avro data from the given date range.
+    :param start_time: Start date in the format `YYYY-MM-DD HH:MM:SS`.
+    :param end_time: End date in the format `YYYY-MM-DD HH:MM:SS`.
     """
-    global dataframe
+    global hdfs_client
 
-    filtered_df = dataframe
-    if start_time:
-        start_time = pd.to_datetime(start_time)
-        filtered_df = filtered_df[filtered_df['ctmString'] >= start_time]
-    if end_time:
-        end_time = pd.to_datetime(end_time)
-        filtered_df = filtered_df[filtered_df['ctmString'] <= end_time]
-
-    if filtered_df.empty:
-        return {"message": "No data found for the specified time range."}
+    filtered_df = prepare_dataframe(hdfs_client, start_time, end_time)
 
     feature_columns = ["open", 'close', 'high', 'low', 'vol']
     target_column = 'open'

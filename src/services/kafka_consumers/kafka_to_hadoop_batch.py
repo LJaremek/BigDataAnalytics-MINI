@@ -1,6 +1,7 @@
 import json
 import time
 
+from hdfs.util import HdfsError
 from hdfs import InsecureClient
 from dotenv import load_dotenv
 from fastavro import writer
@@ -30,6 +31,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     batch_size = 10
+    ATTEMPTS = 5
 
     hdfs_client = InsecureClient("http://namenode:50070", user="root")
     create_dir_if_not_exists(hdfs_client, "/data")
@@ -38,6 +40,7 @@ if __name__ == "__main__":
     kafka_consumer = get_kafka_consumer("batch")
 
     print("SAFE MODE:", is_safemode_on())
+
     batches: dict[str, Batch] = {}
     while True:
         for message in kafka_consumer:
@@ -50,15 +53,15 @@ if __name__ == "__main__":
                 batches[source] = Batch()
             batches[source].append(new_record)
 
-            # TMP
-            from random import randint
-            the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
-            hdfs_path = f"/eda_tmp/{source}/{the_time}_{randint(10, 99)}.avro"
-            with hdfs_client.write(hdfs_path, encoding=None) as w_output:
-                schema = AVRO_SCHEMAS[source]
-                avro_data = batches[source].records
-                writer(w_output, schema, avro_data)
-            # TMP
+            # # TMP
+            # from random import randint
+            # the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
+            # hdfs_path = f"/eda_tmp/{source}/{the_time}_{randint(10, 99)}.avro"
+            # with hdfs_client.write(hdfs_path, encoding=None) as w_output:
+            #     schema = AVRO_SCHEMAS[source]
+            #     avro_data = batches[source].records
+            #     writer(w_output, schema, avro_data)
+            # # TMP
 
             batch_size = batches[source].size
             batch_limit = BATCH_LIMITS[source.split("_")[1]]
@@ -66,15 +69,21 @@ if __name__ == "__main__":
             if batch_size >= batch_limit:
                 print(f"New '{source}' batch! Records: {batches[source].size}")
                 the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
-                hdfs_path = f"/data/batch_{source}/{the_time}.avro"
+                month = the_time[:7]
+                hdfs_path = f"/data/batch_{source}/{month}/{the_time}.avro"
 
                 if is_safemode_on():
                     print("SAFE MODE IS ON")
                     time.sleep(10)
 
-                with hdfs_client.write(hdfs_path, encoding=None) as w_output:
-                    schema = AVRO_SCHEMAS[source]
-                    avro_data = batches[source].records
-                    writer(w_output, schema, avro_data)
-
-                batches[source].reset()
+                for _ in range(ATTEMPTS):
+                    try:
+                        with hdfs_client.write(hdfs_path, encoding=None) as w_output:
+                            schema = AVRO_SCHEMAS[source]
+                            avro_data = batches[source].records
+                            writer(w_output, schema, avro_data)
+                        batches[source].reset()
+                        break
+                    except HdfsError as e:
+                        print("[ERROR]", str(e))
+                        time.sleep(5)
