@@ -7,10 +7,16 @@ import torch
 
 
 class LSTMModel(nn.Module):
-    def __init__(self, input_size=7, hidden_size=50, num_layers=2, output_size=1, dropout=0.2):
+    def __init__(self, input_size=12, hidden_size=50, num_layers=2, output_size=1, dropout=0.2):
         """
         input_size (int): Number of input features. Default:
-            open, close, high, low, vol, hour, day_of_week
+            Hour, Day of Week, Open, Close, High, Low, Volume, 
+            Average news sentiment, Temperature min 2m (°C), 
+            Temperature max 2m (°C), Rain sum (mm), Sunshine duration (s).
+        hidden_size (int): Number of hidden units in the LSTM layers.
+        num_layers (int): Number of LSTM layers.
+        output_size (int): Number of output features (e.g., predicted price).
+        dropout (float): Dropout rate for regularization.
         """
         super(LSTMModel, self).__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True, dropout=dropout)
@@ -19,8 +25,14 @@ class LSTMModel(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        """
+        Forward pass:
+        x: Input tensor of shape (batch_size, sequence_length, input_size)
+        Returns:
+            out: Output tensor of shape (batch_size, output_size)
+        """
         out, _ = self.lstm(x)
-        out = self.dropout(out[:, -1, :])
+        out = self.dropout(out[:, -1, :])  # Take the output of the last time step
         out = self.fc(out)
         out = self.relu(out)
         return out
