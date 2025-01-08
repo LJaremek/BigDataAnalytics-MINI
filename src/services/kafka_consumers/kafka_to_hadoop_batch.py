@@ -45,9 +45,11 @@ if __name__ == "__main__":
     while True:
         for message in kafka_consumer:
             new_record = json.loads(message.value.decode("utf-8"))
+            print(new_record.keys())
             source = new_record["source"]
-            del new_record["source"]
             print("Soruce:", source)
+            del new_record["source"]
+            del new_record["date_format"]
 
             if source not in batches:
                 batches[source] = Batch()
@@ -81,6 +83,7 @@ if __name__ == "__main__":
                         with hdfs_client.write(hdfs_path, encoding=None) as w_output:
                             schema = AVRO_SCHEMAS[source]
                             avro_data = batches[source].records
+                            print(avro_data)
                             writer(w_output, schema, avro_data)
                         batches[source].reset()
                         break

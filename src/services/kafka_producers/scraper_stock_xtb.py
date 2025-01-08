@@ -10,7 +10,7 @@ from tools import current_date, compare_dates
 
 
 SCRAPER_NAME = "scraper_stock_xtb"
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+DATE_FORMAT = "%Y-%m-%d"
 MINUTES = 5
 DAYS = 1
 
@@ -18,7 +18,7 @@ DAYS = 1
 if __name__ == "__main__":
     load_dotenv()
 
-    DEBUG_MODE = os.getenv("DEBUG_MODE")
+    DEBUG_MODE = bool(int(os.getenv("DEBUG_MODE")))
     print("[START] Mode:", DEBUG_MODE)
 
     producer = get_kafka_producer()
@@ -49,6 +49,7 @@ if __name__ == "__main__":
                 date_start, date_end, "COCOA", "H1"
                 )["returnData"]["rateInfos"]
         else:
+            print("[WANR] Mock data")
             candlesticks = [
                 {'ctm': 1732266000000, 'ctmString': 'Nov 22, 2024, 10:00:00 AM', 'open': 8714.0, 'close': -17.0, 'high': 0.0, 'low': -35.0, 'vol': 1157.0},  # noqa: E501
                 {'ctm': 1732269600000, 'ctmString': 'Nov 22, 2024, 11:00:00 AM', 'open': 8698.0, 'close': 21.0, 'high': 59.0, 'low': -5.0, 'vol': 3904.0},  # noqa: E501
@@ -65,7 +66,10 @@ if __name__ == "__main__":
         data = {
             "source": "scraper_stock_xtb",
             "candlesticks": candlesticks,
-            "time": time.strftime(DATE_FORMAT)
+            "time": time.strftime(DATE_FORMAT),
+            "date_start": date_start,
+            "date_end": date_end,
+            "date_format": DATE_FORMAT
         }
 
         producer.send("scraped_data", value=data)
@@ -82,4 +86,4 @@ if __name__ == "__main__":
             running = False
             print("[INFO] running = False")
 
-        time.sleep(MINUTES)
+        time.sleep(60*MINUTES)

@@ -18,7 +18,7 @@ DAYS = 1
 if __name__ == "__main__":  # CRON JOB
     load_dotenv()
 
-    DEBUG_MODE = os.getenv("DEBUG_MODE")
+    DEBUG_MODE = bool(int(os.getenv("DEBUG_MODE")))
     print("[START] Mode:", DEBUG_MODE)
 
     producer = get_kafka_producer()
@@ -41,8 +41,12 @@ if __name__ == "__main__":  # CRON JOB
         data = {
             "source": SCRAPER_NAME,
             "weather": [weather],
-            "time": the_time
+            "time": the_time,
+            "date_start": date_start,
+            "date_end": date_end,
+            "date_format": DATE_FORMAT
         }
+        print(data.keys())
 
         producer.send("scraped_data", value=data)
 
@@ -57,4 +61,4 @@ if __name__ == "__main__":  # CRON JOB
             running = False
             print("[INFO] running = False")
 
-        time.sleep(MINUTES)
+        time.sleep(60*MINUTES)

@@ -19,7 +19,7 @@ MINUTES = 5
 if __name__ == "__main__":
     load_dotenv()
 
-    DEBUG_MODE = os.getenv("DEBUG_MODE")
+    DEBUG_MODE = bool(int(os.getenv("DEBUG_MODE")))
     print("[START] Mode:", DEBUG_MODE)
 
     if not DEBUG_MODE:
@@ -53,13 +53,18 @@ if __name__ == "__main__":
             data = {
                 "source": "scraper_news_worldnewsapi",
                 "news": parsed_articles,
-                "time": time.strftime(DATE_FORMAT)
+                "time": time.strftime(DATE_FORMAT),
+                "date_start": date_start,
+                "date_end": date_end,
+                "date_format": DATE_FORMAT
             }
         else:
+            print("MOCK DATA WARNING")
             with open("worldnewsapi.json", "r") as file:
                 content = file.read().replace("\\", "")
             data = json.loads(rf"{content}")
 
+        print(data.keys())
         producer.send("scraped_data", value=data)
 
         count = len(data["news"])
@@ -68,4 +73,4 @@ if __name__ == "__main__":
         date_start = date_end
         date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
 
-        time.sleep(MINUTES)
+        time.sleep(60*MINUTES)

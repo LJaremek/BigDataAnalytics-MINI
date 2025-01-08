@@ -20,7 +20,7 @@ MINUTES = 5
 if __name__ == "__main__":
     load_dotenv()
 
-    DEBUG_MODE = os.getenv("DEBUG_MODE")
+    DEBUG_MODE = bool(int(os.getenv("DEBUG_MODE")))
     print("[START] Mode:", DEBUG_MODE)
 
     if not DEBUG_MODE:
@@ -51,7 +51,10 @@ if __name__ == "__main__":
             data = {
                 "source": SCRAPER_NAME,
                 "news": parsed_articles,
-                "time": time.strftime(DATE_FORMAT)
+                "time": time.strftime(DATE_FORMAT),
+                "date_start": date_start,
+                "date_end": date_end,
+                "date_format": DATE_FORMAT
             }
         else:
             with open("newsapi.json", "r") as file:
@@ -66,4 +69,4 @@ if __name__ == "__main__":
         date_start = date_end
         date_end = add_n_minutes(date_start, MINUTES)
 
-        time.sleep(MINUTES)
+        time.sleep(60*MINUTES)

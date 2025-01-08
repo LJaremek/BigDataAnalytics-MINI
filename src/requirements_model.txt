@@ -7,3 +7,5 @@ pymongo
 python-dotenv
 torch
 scikit-learn
+langdetect
+vaderSentiment

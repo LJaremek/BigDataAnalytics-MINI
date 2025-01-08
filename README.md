@@ -71,19 +71,19 @@ docker exec -it bigdataanalytics-mini-kafka-1 kafka-console-consumer --bootstrap
 
 Checking docker pod logs:
 ```sh
-docker logs \<IMAGE NAME\>
+sudo docker logs \<IMAGE NAME\>
 ```
 
 
 Build custom Docker Image with torch:
 ```sh
-docker build -t python_3_10_torch -f Dockerfile.torch .
+sudo docker build -t python_3_10_torch -f Dockerfile.torch .
 ```
 
 ### HDFS commands
 Enter to the container
 ```sh
-docker exec -it namenode bash
+sudo docker exec -it namenode bash
 ```
 
 List files:

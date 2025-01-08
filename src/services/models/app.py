@@ -23,6 +23,9 @@ def prepare_dataframe(hdfs_client, start_time, end_time):
     ...
 
 
+# Model giełdy - pogoda + giełda + wynik_modelu_sentyment
+
+
 @app.post("/train/")
 async def train(start_time: str, end_time: str,) -> dict:
     """
