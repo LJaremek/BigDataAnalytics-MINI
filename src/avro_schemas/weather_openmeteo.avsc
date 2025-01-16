@@ -5,6 +5,8 @@
   "fields": [
     {"name": "temperature", "type": "float"},
     {"name": "rain", "type": "float"},
-    {"name": "sun", "type": "float"}
+    {"name": "sun", "type": "float"},
+    {"name": "date_start", "type": "string"},
+    {"name": "date_end", "type": "string"}
   ]
 }

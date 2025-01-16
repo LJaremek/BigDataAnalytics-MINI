@@ -1,43 +1,13 @@
 from datetime import datetime, timedelta
+import os
+import re
 
+from sklearn.preprocessing import LabelEncoder
 from hdfs import InsecureClient
 import pandas as pd
 import fastavro
 
-
-def load_avro_from_hdfs(
-        hdfs_client: InsecureClient,
-        hdfs_path: str
-        ) -> pd.DataFrame:
-    with hdfs_client.read(hdfs_path) as reader:
-        records = list(fastavro.reader(reader))
-    return pd.DataFrame(records)
-
-
-def prepare_dataframe_with_datetime(
-        hdfs_client: InsecureClient,
-        hdfs_folder: str
-        ) -> pd.DataFrame:
-
-    file_statuses = hdfs_client.list(hdfs_folder, status=True)
-    avro_files = [
-        f"{hdfs_folder}/{file_status[1]['pathSuffix']}"
-        for file_status in file_statuses
-        if file_status[1]["type"] == "FILE"
-    ]
-
-    dataframes = [
-        load_avro_from_hdfs(hdfs_client, file)
-        for file in avro_files
-        ]
-    full_data = pd.concat(dataframes, ignore_index=True)
-
-    full_data["ctmString"] = pd.to_datetime(
-        full_data["ctmString"],
-        format="%b %d, %Y, %I:%M:%S %p"
-        )
-
-    return full_data
+from model_tools import get_sentiment, get_language
 
 
 def get_date_one_month_ago(date_format: str = "%Y-%m-%d") -> str:
@@ -54,3 +24,105 @@ def add_n_days(
     date_object = datetime.strptime(date_string, date_format)
     new_date = date_object + timedelta(days=days)
     return new_date.strftime(date_format)
+
+
+def collect_avro_files_to_dataframe(hdfs_client: InsecureClient, base_folder: str) -> pd.DataFrame:
+    """
+    Zbiera wszystkie pliki Avro z podfolderów danego folderu na HDFS i buduje ramkę danych.
+
+    :param hdfs_client: Klient HDFS (InsecureClient).
+    :param base_folder: Ścieżka do folderu na HDFS.
+    :return: DataFrame zawierający dane z wszystkich plików Avro.
+    """
+    all_dataframes = []
+
+    try:
+        # Pobierz listę podfolderów i plików
+        for root, dirs, files in hdfs_client.walk(base_folder):
+            for file in files:
+                if file.endswith('.avro'):
+                    avro_path = os.path.join(root, file)
+                    try:
+                        with hdfs_client.read(avro_path) as avro_reader:
+                            records = list(fastavro.reader(avro_reader))
+                            if records:
+                                df = pd.DataFrame(records)
+                                all_dataframes.append(df)
+                    except Exception as e:
+                        print(f"Nie udało się odczytać pliku {avro_path}: {e}")
+    except Exception as e:
+        print(f"Nie udało się odczytać folderu {base_folder}: {e}")
+
+    # Połącz wszystkie ramki danych
+    if all_dataframes:
+        full_dataframe = pd.concat(all_dataframes, ignore_index=True)
+    else:
+        full_dataframe = pd.DataFrame()
+
+    return full_dataframe
+
+
+def clean_text(text):
+    """
+    Oczyszcza tekst, usuwając obiekty HTML, dziwne znaki, adresy email, adresy URL
+    i inne niechciane elementy oraz zmieniając tekst na małe litery.
+
+    :param text: Tekst do oczyszczenia.
+    :return: Oczyszczony tekst.
+    """
+    if not isinstance(text, str):
+        return ""
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(
+        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\b', '', text
+        )
+    text = re.sub(r'http[s]?://\\S+|www\\.\\S+', '', text)
+    text = re.sub(r'\\b\\d{10,}\\b', '', text)
+    text = re.sub(r'\\s+', ' ', text).strip()
+    text = re.sub(r'[^a-zA-Z0-9\\s]', '', text)
+    text = text.lower()
+    return text
+
+
+def merge_dataframes_on_date(df1, df2, df3):
+    if "data" in df1.columns:
+        df1["data"] = df1["data"].apply(clean_text)
+        df1["sentiment"] = df1["data"].apply(get_sentiment)
+        df1["language"] = df1["data"].apply(get_language)
+
+    merged_df = pd.merge(df1, df2, on=["date_start", "date_end"], how="inner")
+
+    merged_df = pd.merge(
+        merged_df, df3, on=["date_start", "date_end"], how="inner"
+    )
+
+    merged_df["date_start"] = pd.to_datetime(
+        merged_df["date_start"], errors="coerce"
+        )
+    merged_df["date_end"] = pd.to_datetime(
+        merged_df["date_end"], errors="coerce"
+        )
+
+    merged_df["ctm"] = merged_df["ctm"].astype(float, errors="ignore")
+    merged_df["open"] = merged_df["open"].astype(float, errors="ignore")
+    merged_df["close"] = merged_df["close"].astype(float, errors="ignore")
+    merged_df["high"] = merged_df["high"].astype(float, errors="ignore")
+    merged_df["low"] = merged_df["low"].astype(float, errors="ignore")
+    merged_df["vol"] = merged_df["vol"].astype(float, errors="ignore")
+    merged_df["temperature"] = merged_df["temperature"].astype(
+        float, errors="ignore"
+        )
+    merged_df["rain"] = merged_df["rain"].astype(float, errors="ignore")
+    merged_df["sun"] = merged_df["sun"].astype(float, errors="ignore")
+
+    sentiment_mapping = {"pos": 1, "neu": 0, "neg": -1}
+    merged_df['sentiment'] = merged_df['sentiment'].map(sentiment_mapping)
+
+    label_encoder = LabelEncoder()
+    merged_df['language'] = label_encoder.fit_transform(merged_df['language'])
+
+    final_columns = ["ctm", "ctmString", "open", "close", "high", "low", "vol",
+                     "date_start", "date_end", "temperature", "rain", "sun",
+                     "date", "data", "sentiment", "language"]
+
+    return merged_df[final_columns]

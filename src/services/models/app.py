@@ -1,33 +1,26 @@
+from torch.utils.data import DataLoader, TensorDataset
 from hdfs import InsecureClient
+from datetime import timedelta
 from fastapi import FastAPI
 import pandas as pd
 import torch
 
-from tools import prepare_dataframe_with_datetime
-from tools import get_date_one_month_ago, add_n_days
-from model_tools import load_model_from_hdfs, save_model_to_hdfs, train_model
+from tools import merge_dataframes_on_date, collect_avro_files_to_dataframe
+from model_tools import LSTMModel, load_model_from_hdfs, save_model_to_hdfs
 from mongodb_logging import get_last_model_log, add_new_model_log
 
 app = FastAPI()
 
 hdfs_client = InsecureClient("http://namenode:50070", user="root")
-
-model_path = "/models/lstm_model.pkl"
-hdfs_stock_folder = "/data/batch_scraper_stock_xtb"
-
-model = load_model_from_hdfs(hdfs_client, model_path)
-dataframe = prepare_dataframe_with_datetime(hdfs_client, hdfs_stock_folder)
+MODEL_NAME = "lstm_stock_prediction"
 
 
-def prepare_dataframe(hdfs_client, start_time, end_time):
-    ...
+def model_path(date: str) -> str:
+    return f"/models/lstm_model_{str(date)}.pkl"
 
 
-# Model giełdy - pogoda + giełda + wynik_modelu_sentyment
-
-
-@app.post("/train/")
-async def train(start_time: str, end_time: str,) -> dict:
+@app.get("/train/")
+async def train() -> dict:
     """
     Trains the LSTM model on Avro data from the given date range.
     :param start_time: Start date in the format `YYYY-MM-DD HH:MM:SS`.
@@ -35,74 +28,84 @@ async def train(start_time: str, end_time: str,) -> dict:
     """
     global hdfs_client
 
-    filtered_df = prepare_dataframe(hdfs_client, start_time, end_time)
+    df_news = pd.concat([
+        collect_avro_files_to_dataframe(
+            hdfs_client, "/data/batch_scraper_news_newsapi"
+            ),
+        collect_avro_files_to_dataframe(
+            hdfs_client, "/data/batch_scraper_news_worldnewsapi"
+            ),
+        collect_avro_files_to_dataframe(
+            hdfs_client, "/data/batch_scraper_news_xtb"
+            )
+    ], ignore_index=True)
 
-    feature_columns = ["open", 'close', 'high', 'low', 'vol']
-    target_column = 'open'
+    df_weather = \
+        collect_avro_files_to_dataframe(
+            hdfs_client, "/data/batch_scraper_weather_openmeteo"
+            )
 
-    X = torch.tensor(filtered_df[feature_columns].values, dtype=torch.float32)
-    y = torch.tensor(filtered_df[target_column].values, dtype=torch.float32)
+    df_stock = \
+        collect_avro_files_to_dataframe(
+            hdfs_client, "/data/batch_scraper_stock_xtb"
+            )
 
-    train_size = int(0.8 * len(X))
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
+    df = merge_dataframes_on_date(df_news, df_weather, df_stock)
+
+    last_date = None  # get_last_model_log(MODEL_NAME)
+    if last_date is None:
+        last_date = df['date_start'].min().strftime("%Y-%m-%d")
+        model = load_model_from_hdfs(hdfs_client, model_path(last_date))
+
+    df["date_start"] = pd.to_datetime(df["date_start"])
+    df["date_end"] = pd.to_datetime(df["date_end"])
 
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    epochs = 50
-    train_model(
-        model, criterion, optimizer,
-        X_train, y_train, epochs,
-        X_test, y_test, 5
-        )
+    start_date = pd.to_datetime(last_date)
+    end_date = df['date_end'].max()
 
-    save_model_to_hdfs(hdfs_client, model_path, model)
+    while start_date < end_date:
+        batch_start = start_date
+        batch_end = batch_start + timedelta(days=5)
 
-    return {
-        "message": "Model trained successfully on filtered Avro data."
-    }
+        batch_data = df[
+            (df['date_start'] >= batch_start) & (df['date_end'] < batch_end)
+            ]
 
+        if batch_data.empty:
+            start_date = batch_end
+            continue
 
-@app.post("/predict/")
-async def predict(
-        hdfs_file: str,
-        sequence_length: int = 10,
-        num_predictions: int = 1
-        ) -> dict:
-    """
-    Generuje prognozy "open" na podstawie całej historii dla kolejnych dni.
-    :param hdfs_file: Ścieżka do pliku Avro na HDFS.
-    :param sequence_length: Długość sekwencji historycznej używanej
-        do przewidywania.
-    :param num_predictions: Liczba kolejnych prognoz do wygenerowania.
-    """
-    data = prepare_dataframe_with_datetime(hdfs_client, hdfs_file)
+        X = batch_data[[
+            "open", "close", "high", "low", "vol", "temperature",
+            "rain", "sun", "sentiment", "language"
+            ]]
+        y = batch_data[["open"]]
 
-    feature_columns = ['open', 'close', 'high', 'low', 'vol']
-    features = data[feature_columns].values
-    X = torch.tensor(features, dtype=torch.float32)
+        X = torch.tensor(X.values, dtype=torch.float32)
+        y = torch.tensor(y.values, dtype=torch.float32)
 
-    if len(X) < sequence_length:
-        return {"message": "Not enough data to form a sequence."}
+        dataset = TensorDataset(X, y)
+        dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
-    # [1, sequence_length, num_features]
-    sequence = X[-sequence_length:].unsqueeze(0)
+        for epoch in range(10):
+            epoch_loss = 0
+            batch_count = 0
+            for inputs, targets in dataloader:
+                inputs = inputs.unsqueeze(1)
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+                batch_count += 1
+            avg_loss = epoch_loss / batch_count if batch_count > 0 else 0
+            print(f"Epoch: {epoch+1}, Date Start: {batch_start}, End Date: {batch_end}, Average Loss: {avg_loss:.4f}")
 
-    predictions = []
+        # save_model_to_hdfs(hdfs_client, model_path(start_date), model)
+        start_date = batch_end
 
-    model.eval()
-    with torch.no_grad():
-        for _ in range(num_predictions):
-            prediction = model(sequence).squeeze().item()
-            predictions.append(prediction)
-
-            next_step = torch.tensor(
-                [[prediction] + sequence[0, -1, 1:].tolist()],
-                dtype=torch.float32
-                )
-            sequence = torch.cat(
-                (sequence[:, 1:, :], next_step.unsqueeze(0)), dim=1
-                )
-
-    return {"next_open_predictions": predictions}
+    return {"message": "Model trained successfully over 5-day intervals."}

@@ -1,4 +1,5 @@
 import time
+import ssl
 import os
 
 from dotenv import load_dotenv
@@ -23,13 +24,6 @@ if __name__ == "__main__":
 
     producer = get_kafka_producer()
 
-    if not DEBUG_MODE:
-        xtb = XTB(
-            os.getenv("XTB_USER_ID"),
-            os.getenv("XTB_PASSWORD")
-        )
-        xtb.login()
-
     last_end_date = get_last_scraper_end_date(SCRAPER_NAME)
 
     if last_end_date is None:
@@ -45,9 +39,17 @@ if __name__ == "__main__":
     while running:
         print("Time:", date_start, date_end)
         if not DEBUG_MODE:
+            xtb = XTB(
+                os.getenv("XTB_USER_ID"),
+                os.getenv("XTB_PASSWORD")
+            )
+            xtb.login()
+
             candlesticks = xtb.get_chart_range_request(
                 date_start, date_end, "COCOA", "H1"
                 )["returnData"]["rateInfos"]
+
+            del xtb
         else:
             print("[WANR] Mock data")
             candlesticks = [

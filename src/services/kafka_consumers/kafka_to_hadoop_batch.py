@@ -44,16 +44,18 @@ if __name__ == "__main__":
     batches: dict[str, Batch] = {}
     while True:
         for message in kafka_consumer:
-            new_record = json.loads(message.value.decode("utf-8"))
-            print(new_record.keys())
-            source = new_record["source"]
+            new_records = json.loads(message.value.decode("utf-8"))
+            print(new_records.keys())
+            source = new_records["source"]
+            date_start = new_records["date_start"]
+            date_end = new_records["date_end"]
             print("Soruce:", source)
-            del new_record["source"]
-            del new_record["date_format"]
+            del new_records["source"]
+            del new_records["date_format"]
 
             if source not in batches:
                 batches[source] = Batch()
-            batches[source].append(new_record)
+            batches[source].append(new_records, date_start, date_end)
 
             # # TMP
             # from random import randint
