@@ -1,0 +1,12 @@
+FROM python:3.10
+
+WORKDIR /app
+
+COPY src/requirements_dashboard.txt .
+RUN python3 -m pip install -r requirements_dashboard.txt
+
+COPY .env /app/
+
+COPY src/services/dashboard/ /app/
+
+CMD ["python", "app.py"]

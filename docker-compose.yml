@@ -214,6 +214,7 @@ services:
     depends_on:
       - namenode
 
+  # Model API
   model_api:
     build:
       context: .
@@ -226,6 +227,19 @@ services:
     depends_on:
       - namenode
       - datanode
+
+  # Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: dashboard
+    ports:
+      - "8050:8050"  # Port Dash
+    networks:
+      - kafka
+    depends_on:
+      - mongodb
 
 volumes:
   namenode_data:
