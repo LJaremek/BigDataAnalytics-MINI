@@ -162,6 +162,8 @@ services:
         condition: service_started
       namenode:
         condition: service_healthy
+      datanode:
+        condition: service_healthy
     environment:
       KAFKA_BROKER: kafka:9092
     networks:
@@ -211,6 +213,19 @@ services:
       - hadoop
     depends_on:
       - namenode
+
+  model_api:
+    build:
+      context: .
+      dockerfile: Dockerfile.model_api
+    ports:
+      - "8000:8000"
+    networks:
+      - hadoop
+      - kafka
+    depends_on:
+      - namenode
+      - datanode
 
 volumes:
   namenode_data:

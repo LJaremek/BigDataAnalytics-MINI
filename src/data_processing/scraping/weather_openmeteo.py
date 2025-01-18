@@ -56,6 +56,9 @@ def get_weather(
         resource: str
         ) -> dict[str, float]:
 
+    assert len(start_date) == len("YYYY-MM-DD")
+    assert len(end_date) == len("YYYY-MM-DD")
+
     results = {
         "temperature": [],
         "rain": [],

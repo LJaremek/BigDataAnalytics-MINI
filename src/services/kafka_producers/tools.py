@@ -58,7 +58,44 @@ def add_n_days(
     return new_date.strftime(date_format)
 
 
-def add_n_minutes(datetime_string: str, minutes: int) -> str:
-    datetime_object = datetime.strptime(datetime_string, "%Y-%m-%dT%H:%M:%S")
+def add_n_minutes(
+        datetime_string: str,
+        minutes: int,
+        date_format: str = "%Y-%m-%dT%H:%M:%S"
+        ) -> str:
+    datetime_object = datetime.strptime(datetime_string, date_format)
     new_datetime = datetime_object + timedelta(minutes=minutes)
-    return new_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+    return new_datetime.strftime(date_format)
+
+
+def current_date(date_format: str = "%Y-%m-%d") -> str:
+    return datetime.now().strftime(date_format)
+
+
+def compare_dates(
+        date1: str,
+        date2: str,
+        date_format: str = "%Y-%m-%d",
+        comparation: str = "=="
+        ) -> bool:
+    """
+    Check if date1 is less than or equal to date2.
+
+    :param date1: The first date as a string.
+    :param date2: The second date as a string.
+    :param date_format: The format of the input dates (default: "%Y-%m-%d").
+    :param comparation: ==, <, >, <=, >=
+    :return: True if date1 <= date2, False otherwise.
+    """
+    d1 = datetime.strptime(date1, date_format)
+    d2 = datetime.strptime(date2, date_format)
+    if comparation == "==":
+        return d1 == d2
+    elif comparation == "<":
+        return d1 < d2
+    elif comparation == ">":
+        return d1 > d2
+    elif comparation == "<=":
+        return d1 <= d2
+    elif comparation == ">=":
+        return d1 >= d2

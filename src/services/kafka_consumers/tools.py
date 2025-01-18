@@ -25,6 +25,19 @@ AVRO_SCHEMAS = {
 }
 
 
+def add_dates_to_records(
+        records: list[dict],
+        date_start: str,
+        date_end: str
+        ) -> list[dict]:
+
+    for record in records:
+        record["date_start"] = date_start
+        record["date_end"] = date_end
+
+    return records
+
+
 class Batch:
     def __init__(self, size: int = 0, records: list = None) -> None:
         self.size = size
@@ -33,15 +46,21 @@ class Batch:
         else:
             self.records = records
 
-    def append(self, new_record: dict) -> None:
+    def append(self, new_record: dict, date_start: str, date_end: str) -> None:
         if "news" in new_record:
-            self.records += new_record["news"]
+            self.records += add_dates_to_records(
+                new_record["news"], date_start, date_end
+                )
         elif "candlesticks" in new_record:
-            self.records += new_record["candlesticks"]
+            self.records += add_dates_to_records(
+                new_record["candlesticks"], date_start, date_end
+                )
         elif "weather" in new_record:
-            self.records += new_record["weather"]
+            self.records += add_dates_to_records(
+                new_record["weather"], date_start, date_end
+                )
         else:
-            msg = "Uknown record data. Available: news, candlesticks"
+            msg = "Uknown record data. Available: news, candlesticks, weather"
             raise Exception(msg)
 
         self.size += 1

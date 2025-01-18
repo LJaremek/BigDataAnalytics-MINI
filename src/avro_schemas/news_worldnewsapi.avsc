@@ -4,6 +4,8 @@
   "namespace": "bigdata.avro",
   "fields": [
     {"name": "date", "type": "string"},
-    {"name": "data", "type": "string"}
+    {"name": "data", "type": "string"},
+    {"name": "date_start", "type": "string"},
+    {"name": "date_end", "type": "string"}
   ]
 }
