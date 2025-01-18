@@ -6,6 +6,8 @@ COPY src/requirements_model.txt .
 RUN python3 -m pip install -r requirements_model.txt
 RUN python3 -m pip install uvicorn
 
+COPY .env /app/
+
 COPY src/services/models/ /app/
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -93,3 +93,11 @@ hdfs dfs -ls /
 
 ### Mongo DB
 http://localhost:8081
+
+
+### Model API
+Treining:
+http://localhost:8000/train/
+
+Sample prediction
+http://localhost:8000/predict/?open=11500.0&close=11450.0&high=11600.0&low=11300.0&vol=7500.0&temperature=20.5&rain=0.2&sun=4500.0&sentiment=1.0&language=0.0

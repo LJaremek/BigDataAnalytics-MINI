@@ -13,9 +13,8 @@ MODEL_NAMES = (
 )
 
 
-def initialize_collections() -> None:
-    client = MongoClient("mongodb://admin:admin123@mongodb:27017/")
-    db = client["logs"]  # Specify the database
+def initialize_database_logs(client: MongoClient) -> None:
+    db = client["logs"]
 
     for scraper_name in SCRAPER_NAMES:
         scraper_log_name = f"{scraper_name}_logs"
@@ -38,13 +37,39 @@ def initialize_collections() -> None:
             db.create_collection(model_log_name, capped=False)
             collection = db[model_log_name]
 
-            collection.create_index("start_datetime", unique=False)
-            collection.create_index("end_datetime", unique=False)
-            collection.create_index("param_name", unique=False)
-            collection.create_index("param_value", unique=False)
+            collection.create_index("the_date", unique=False)
+            collection.create_index("loss", unique=False)
             print(f"Create new log table for: '{model_log_name}'")
         else:
             print(f"'{model_log_name}' already has the log table")
+
+
+def initialize_database_data(client: MongoClient) -> None:
+    db = client["data"]
+    if "means" not in db.list_collection_names():
+        db.create_collection("means", capped=False)
+        collection = db["means"]
+
+        collection.create_index("open", unique=False)
+        collection.create_index("close", unique=False)
+        collection.create_index("high", unique=False)
+        collection.create_index("low", unique=False)
+        collection.create_index("vol", unique=False)
+        collection.create_index("temperature", unique=False)
+        collection.create_index("rain", unique=False)
+        collection.create_index("sun", unique=False)
+        collection.create_index("sentiment", unique=False)
+        collection.create_index("language", unique=False)
+        print("Create new data table: 'means'")
+    else:
+        print("'means' table exists")
+
+
+def initialize_collections() -> None:
+    client = MongoClient("mongodb://admin:admin123@mongodb:27017/")
+
+    initialize_database_logs(client)
+    initialize_database_data(client)
 
     print("Collections and indexes have been initialized.")
     client.close()
