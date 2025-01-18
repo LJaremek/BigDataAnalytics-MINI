@@ -5,6 +5,58 @@ networks:
     driver: bridge
 
 services:
+  # MongoDB
+  mongodb:
+    image: mongo:5.0  # 4.4
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"  # Port MongoDB
+    networks:
+      - kafka
+    volumes:
+      - mong_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro  # Automatyczne inicjalizowanie użytkownika
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+    healthcheck:
+      test: ["CMD", "mongo", "--username", "admin", "--password", "admin123", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo_init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - kafka
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"  # Port Mongo Express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - kafka
+
+  # ZooKeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     environment:
@@ -14,6 +66,7 @@ services:
     networks:
       - kafka
 
+  # Kafka
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     ports:
@@ -94,6 +147,19 @@ services:
       KAFKA_BROKER: kafka:9092
     networks:
       - kafka
+    
+  scraper_weather_openmeteo:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper_weather_openmeteo
+    depends_on:
+      - kafka
+      - zookeeper
+      - mongodb
+    environment:
+      KAFKA_BROKER: kafka:9092
+    networks:
+      - kafka
 
   # CONSUMERS
   consumer_batch:
@@ -106,6 +172,8 @@ services:
       zookeeper:
         condition: service_started
       namenode:
+        condition: service_healthy
+      datanode:
         condition: service_healthy
     environment:
       KAFKA_BROKER: kafka:9092
@@ -157,6 +225,20 @@ services:
     depends_on:
       - namenode
 
+  model_api:
+    build:
+      context: .
+      dockerfile: Dockerfile.model_api
+    ports:
+      - "8000:8000"
+    networks:
+      - hadoop
+      - kafka
+    depends_on:
+      - namenode
+      - datanode
+
 volumes:
   namenode_data:
   datanode_data:
+  mong_data:

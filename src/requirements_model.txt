@@ -1,0 +1,11 @@
+fastapi
+fastavro
+hdfs
+numpy
+pandas
+pymongo
+python-dotenv
+torch
+scikit-learn
+langdetect
+vaderSentiment

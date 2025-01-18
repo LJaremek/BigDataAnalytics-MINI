@@ -1,10 +1,11 @@
 {
   "type": "record",
-  "name": "news_worldnewsapi",
+  "name": "weather_openmeteo",
   "namespace": "bigdata.avro",
   "fields": [
-    {"name": "date", "type": "string"},
-    {"name": "data", "type": "string"},
+    {"name": "temperature", "type": "float"},
+    {"name": "rain", "type": "float"},
+    {"name": "sun", "type": "float"},
     {"name": "date_start", "type": "string"},
     {"name": "date_end", "type": "string"}
   ]

@@ -56,6 +56,11 @@ sudo docker compose build --no-cache
 sudo docker compose up -d
 ```
 
+Or:
+```sh
+sudo docker compose down; sudo docker compose up --build -d
+```
+
 
 Getting info from kafka
 
@@ -66,5 +71,33 @@ docker exec -it bigdataanalytics-mini-kafka-1 kafka-console-consumer --bootstrap
 
 Checking docker pod logs:
 ```sh
-docker logs \<IMAGE NAME\>
+sudo docker logs \<IMAGE NAME\>
 ```
+
+
+Build custom Docker Image with torch:
+```sh
+sudo docker build -t python_3_10_torch -f Dockerfile.torch .
+```
+
+### HDFS commands
+Enter to the container
+```sh
+sudo docker exec -it namenode bash
+```
+
+List files:
+```sh
+hdfs dfs -ls /
+```
+
+### Mongo DB
+http://localhost:8081
+
+
+### Model API
+Treining:
+http://localhost:8000/train/
+
+Sample prediction
+http://localhost:8000/predict/?open=11500.0&close=11450.0&high=11600.0&low=11300.0&vol=7500.0&temperature=20.5&rain=0.2&sun=4500.0&sentiment=1.0&language=0.0

@@ -9,6 +9,8 @@
     {"name": "close", "type": "float"},
     {"name": "high", "type": "float"},
     {"name": "low", "type": "float"},
-    {"name": "vol", "type": "float"}
+    {"name": "vol", "type": "float"},
+    {"name": "date_start", "type": "string"},
+    {"name": "date_end", "type": "string"}
   ]
 }

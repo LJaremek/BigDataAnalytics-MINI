@@ -9,5 +9,6 @@ COPY .env /app/
 
 COPY src/services/kafka_producers/scraper_stock_xtb.py /app/
 COPY src/services/kafka_producers/tools.py /app/
+COPY src/services/kafka_producers/mongodb_logging.py /app/
 
 CMD ["python", "-u", "scraper_stock_xtb.py"]

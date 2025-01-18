@@ -1,11 +1,12 @@
 import json
 import time
 
-from fastavro.schema import load_schema
+from hdfs.util import HdfsError
 from hdfs import InsecureClient
 from dotenv import load_dotenv
 from fastavro import writer
 
+from tools import BATCH_LIMITS, AVRO_SCHEMAS
 from tools import get_kafka_consumer, Batch
 
 
@@ -19,44 +20,75 @@ def create_dir_if_not_exists(
         hdfs_client.makedirs(hdfs_directory)
 
 
-if __name__ == "__main__":
-    schemas = {
-        "scraper_news_worldnewsapi": load_schema("avro_schemas/news_worldnewsapi.avsc"),
-        "scraper_news_newsapi": load_schema("avro_schemas/news_newsapi.avsc"),
-        "scraper_news_xtb": load_schema("avro_schemas/news_xtb.avsc"),
-        "scraper_stock_xtb": load_schema("avro_schemas/stock_xtb.avsc"),
-    }
+def is_safemode_on():
+    import requests
+    url = "http://namenode:50070/safemode"  # Adres WebHDFS NameNode
+    response = requests.get(url)
+    return response.text.lower().strip() == "on"
 
+
+if __name__ == "__main__":
     load_dotenv()
 
     batch_size = 10
+    ATTEMPTS = 5
 
     hdfs_client = InsecureClient("http://namenode:50070", user="root")
     create_dir_if_not_exists(hdfs_client, "/data")
+    create_dir_if_not_exists(hdfs_client, "/eda_tmp")
 
     kafka_consumer = get_kafka_consumer("batch")
+
+    print("SAFE MODE:", is_safemode_on())
 
     batches: dict[str, Batch] = {}
     while True:
         for message in kafka_consumer:
-            new_record = json.loads(message.value.decode("utf-8"))
-            source = new_record["source"]
-            del new_record["source"]
+            new_records = json.loads(message.value.decode("utf-8"))
+            print(new_records.keys())
+            source = new_records["source"]
+            date_start = new_records["date_start"]
+            date_end = new_records["date_end"]
+            print("Soruce:", source)
+            del new_records["source"]
+            del new_records["date_format"]
 
             if source not in batches:
                 batches[source] = Batch()
-                batches[source].append(new_record)
-            else:
-                batches[source].append(new_record)
+            batches[source].append(new_records, date_start, date_end)
 
-            if batches[source].size >= batch_size:
+            # # TMP
+            # from random import randint
+            # the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
+            # hdfs_path = f"/eda_tmp/{source}/{the_time}_{randint(10, 99)}.avro"
+            # with hdfs_client.write(hdfs_path, encoding=None) as w_output:
+            #     schema = AVRO_SCHEMAS[source]
+            #     avro_data = batches[source].records
+            #     writer(w_output, schema, avro_data)
+            # # TMP
+
+            batch_size = batches[source].size
+            batch_limit = BATCH_LIMITS[source.split("_")[1]]
+
+            if batch_size >= batch_limit:
                 print(f"New '{source}' batch! Records: {batches[source].size}")
                 the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
-                hdfs_path = f"/data/batch_{source}/{the_time}.avro"
+                month = the_time[:7]
+                hdfs_path = f"/data/batch_{source}/{month}/{the_time}.avro"
 
-                with hdfs_client.write(hdfs_path, encoding=None) as w_output:
-                    schema = schemas[source]
-                    avro_data = batches[source].records
-                    writer(w_output, schema, avro_data)
+                if is_safemode_on():
+                    print("SAFE MODE IS ON")
+                    time.sleep(10)
 
-                batches[source].reset()
+                for _ in range(ATTEMPTS):
+                    try:
+                        with hdfs_client.write(hdfs_path, encoding=None) as w_output:
+                            schema = AVRO_SCHEMAS[source]
+                            avro_data = batches[source].records
+                            print(avro_data)
+                            writer(w_output, schema, avro_data)
+                        batches[source].reset()
+                        break
+                    except HdfsError as e:
+                        print("[ERROR]", str(e))
+                        time.sleep(5)

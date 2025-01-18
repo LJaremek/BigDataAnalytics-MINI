@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 
 import requests
@@ -24,6 +25,10 @@ COCOA_LOCATIONS = {
     }
 }
 
+RESOURCES = {
+    "cocoa": COCOA_LOCATIONS
+}
+
 
 def generate_forecast_url(
         latitude: float,
@@ -45,14 +50,22 @@ def generate_forecast_url(
     return url
 
 
-def get_cocoa_weather(date: str) -> dict[str, float]:
+def get_weather(
+        start_date: str,
+        end_date: str,
+        resource: str
+        ) -> dict[str, float]:
+
+    assert len(start_date) == len("YYYY-MM-DD")
+    assert len(end_date) == len("YYYY-MM-DD")
+
     results = {
         "temperature": [],
         "rain": [],
         "sun": []
     }
 
-    for _, country in COCOA_LOCATIONS.items():
+    for _, country in RESOURCES[resource].items():
         cw = country["weight"]  # country_weight
         country_results = {
             "temperature": [],
@@ -61,13 +74,12 @@ def get_cocoa_weather(date: str) -> dict[str, float]:
         }
 
         for region in country["regions"]:
-            print(region)
             rw = region["weight"]  # region_weight
 
             latitude = region["latitude"]
             longitude = region["longitude"]
             url = generate_forecast_url(
-                latitude, longitude, DAILY_PARAMETERS, date, date
+                latitude, longitude, DAILY_PARAMETERS, start_date, end_date
                 )
             response = requests.get(url)
             data = json.loads(response.text)["daily"]
@@ -96,8 +108,45 @@ def get_cocoa_weather(date: str) -> dict[str, float]:
     return results
 
 
-if __name__ == "__main__":
-    start_date = "2024-10-15"
-    end_date = "2024-10-15"
+def generate_date_range(start_date: str, end_date: str) -> list[str]:
+    """
+    Generate a list of dates between start_date and end_date (inclusive).
 
-    print(get_cocoa_weather(start_date))
+    :param start_date: The starting date in "YYYY-MM-DD" format.
+    :param end_date: The ending date in "YYYY-MM-DD" format.
+    :return: A list of dates in "YYYY-MM-DD" format.
+    """
+    start = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+
+    if start > end:
+        raise ValueError("'start_date' must not be after 'end_date'.")
+
+    date_list = [
+        (start + timedelta(days=i)).strftime("%Y-%m-%d")
+        for i in range((end - start).days + 1)
+        ]
+
+    return date_list
+
+
+def get_weathers(
+        start_date: str,
+        end_date: str,
+        resource: str
+        ) -> list[dict[str, float]]:
+    dates = generate_date_range(start_date, end_date)[1:]
+
+    results = []
+    for end_date in dates:
+        results.append(get_weather(start_date, end_date, resource))
+        start_date = end_date
+
+    return results
+
+
+if __name__ == "__main__":
+    start_date = "2024-11-10"
+    end_date = "2024-11-25"
+
+    print(get_weathers(start_date, end_date, "cocoa"))
