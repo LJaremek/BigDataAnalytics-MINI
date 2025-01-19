@@ -1,5 +1,5 @@
+from datetime import datetime, timedelta
 from typing import AsyncGenerator
-from datetime import timedelta
 
 from torch.utils.data import DataLoader, TensorDataset
 from fastapi.responses import StreamingResponse
@@ -8,10 +8,11 @@ from fastapi import FastAPI
 import pandas as pd
 import torch
 
+from mongodb_logging import set_data_means, get_data_means, log_predicted_open
 from tools import merge_dataframes_on_date, collect_avro_files_to_dataframe
 from model_tools import load_model_from_hdfs, save_model_to_hdfs
 from mongodb_logging import get_last_model_log, add_new_model_log
-from mongodb_logging import set_data_means, get_data_means
+
 
 app = FastAPI()
 
@@ -257,7 +258,8 @@ async def predict(
         rain: float = None,
         sun: float = None,
         sentiment: float = None,
-        language: float = None
+        language: float = None,
+        prediction_date: str = None
         ) -> dict:
     """
     Predicts the 'open' value based on input data passed as query parameters.
@@ -306,5 +308,9 @@ async def predict(
     model.eval()
     with torch.no_grad():
         predicted_open = model(X).item()
+
+    if prediction_date is None:
+        prediction_date = datetime.today().strftime("%Y-%m-%d")
+    log_predicted_open(prediction_date, predicted_open)
 
     return {"predicted_open": predicted_open}

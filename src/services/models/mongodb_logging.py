@@ -22,12 +22,7 @@ def get_last_model_log(model_name: str) -> str | None:
     return None
 
 
-def add_new_model_log(
-        model_name: str,
-        the_date: str,
-        loss: float
-        ) -> None:
-
+def add_new_model_log(model_name: str, the_date: str, loss: float) -> None:
     load_dotenv()
     root_name = os.getenv("ROOT_NAME")
     root_pswd = os.getenv("ROOT_PSWD")
@@ -45,7 +40,6 @@ def add_new_model_log(
 
 
 def set_data_means(dataframe: pd.DataFrame) -> None:
-
     load_dotenv()
     root_name = os.getenv("ROOT_NAME")
     root_pswd = os.getenv("ROOT_PSWD")
@@ -95,3 +89,17 @@ def get_data_means() -> dict[str, float]:
     client.close()
 
     return means
+
+
+def log_predicted_open(date: str, value: float) -> None:
+    load_dotenv()
+    root_name = os.getenv("ROOT_NAME")
+    root_pswd = os.getenv("ROOT_PSWD")
+    client = MongoClient(f"mongodb://{root_name}:{root_pswd}@mongodb:27017/")
+    db = client["data"]
+    collection = db["predicted_open"]
+
+    collection.insert_one({
+        "the_date": date,
+        "open": value
+    })

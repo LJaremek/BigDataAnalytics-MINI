@@ -1,3 +1,4 @@
+import requests
 import json
 import time
 
@@ -20,9 +21,8 @@ def create_dir_if_not_exists(
         hdfs_client.makedirs(hdfs_directory)
 
 
-def is_safemode_on():
-    import requests
-    url = "http://namenode:50070/safemode"  # Adres WebHDFS NameNode
+def is_safemode_on() -> bool:
+    url = "http://namenode:50070/safemode"  # WebHDFS NameNode adress
     response = requests.get(url)
     return response.text.lower().strip() == "on"
 
@@ -45,7 +45,6 @@ if __name__ == "__main__":
     while True:
         for message in kafka_consumer:
             new_records = json.loads(message.value.decode("utf-8"))
-            print(new_records.keys())
             source = new_records["source"]
             date_start = new_records["date_start"]
             date_end = new_records["date_end"]
@@ -56,16 +55,6 @@ if __name__ == "__main__":
             if source not in batches:
                 batches[source] = Batch()
             batches[source].append(new_records, date_start, date_end)
-
-            # # TMP
-            # from random import randint
-            # the_time = time.strftime("%Y_%m_%d-%I_%M_%S")
-            # hdfs_path = f"/eda_tmp/{source}/{the_time}_{randint(10, 99)}.avro"
-            # with hdfs_client.write(hdfs_path, encoding=None) as w_output:
-            #     schema = AVRO_SCHEMAS[source]
-            #     avro_data = batches[source].records
-            #     writer(w_output, schema, avro_data)
-            # # TMP
 
             batch_size = batches[source].size
             batch_limit = BATCH_LIMITS[source.split("_")[1]]
@@ -82,7 +71,10 @@ if __name__ == "__main__":
 
                 for _ in range(ATTEMPTS):
                     try:
-                        with hdfs_client.write(hdfs_path, encoding=None) as w_output:
+                        with (
+                            hdfs_client.write(hdfs_path, encoding=None)
+                            as w_output
+                        ):
                             schema = AVRO_SCHEMAS[source]
                             avro_data = batches[source].records
                             print(avro_data)

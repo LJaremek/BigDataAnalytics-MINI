@@ -228,6 +228,20 @@ services:
       - namenode
       - datanode
 
+  # Data Agregator
+  data_agregator:
+    build:
+      context: .
+      dockerfile: Dockerfile.data_agregator
+    container_name: data_agregator
+    networks:
+      - hadoop
+      - kafka
+    depends_on:
+      - mongodb
+      - namenode
+      - datanode
+
   # Dashboard
   dashboard:
     build:
