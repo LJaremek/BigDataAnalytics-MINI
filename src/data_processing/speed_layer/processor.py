@@ -9,9 +9,10 @@ from pyspark.sql.types import (
     DecimalType,
     DateType,
 )
+import requests
 
 
-WATERMARK_TIME = "20 seconds"
+WATERMARK_TIME = "2 seconds"
 
 spark = SparkSession.builder.appName("KafkaSpeedLayerIngestion").getOrCreate()
 spark.sparkContext.setLogLevel("WARN")
@@ -127,7 +128,18 @@ query = (
         F.struct(["news_list", "stock_list"]).cast("string").alias("value")
     )
     .writeStream.foreach(send_to_kafka)
-    .start()
+    .option("checkpointLocation", "./checkpoint")
+    # .start()
 )
 
-query.awaitTermination()
+def send_http_request(row):
+    try:
+        response = requests.get(f"http://model_api:8000/predict/?open={row['single_candle']['open']}&close=11450.0&high={row['single_candle']['close']}&low={row['single_candle']['low']}&vol={row['single_candle']['vol']}")
+        print(f"Response: {response.status_code}, {response.text}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+query_predict = stock_df.writeStream.foreach(send_http_request).option("checkpointLocation", "./checkpoint").start()
+
+query_predict.awaitTermination()

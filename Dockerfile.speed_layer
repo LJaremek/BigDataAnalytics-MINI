@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY src/requirements.txt .
 RUN python3 -m pip install kafka-python-ng
+RUN python3 -m pip install requests
 
 COPY src/data_processing/speed_layer/processor.py app/processor.py
 ENTRYPOINT [ "/opt/spark/bin/spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1", "app/processor.py" ]
