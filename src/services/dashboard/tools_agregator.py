@@ -258,3 +258,32 @@ def get_predicted_and_real_open() -> pd.DataFrame:
     combined_data.sort_values(by="record_date", inplace=True)
 
     return combined_data
+
+
+def get_weather_from_logs() -> pd.DataFrame:
+    load_dotenv()
+    root_name = os.getenv("ROOT_NAME")
+    root_pswd = os.getenv("ROOT_PSWD")
+
+    client = MongoClient(f"mongodb://{root_name}:{root_pswd}@mongodb:27017/")
+    db = client["logs"]
+
+    newsapi = pd.DataFrame(list(db["scraper_news_newsapi_logs"].find(
+        {}, {"_id": 0, "start_date": 1, "record_count": 1})))
+    newsapi["source"] = "newsapi"
+    if not newsapi.empty:
+        newsapi = newsapi.sort_values(by="start_date")
+
+    worldnewsapi = pd.DataFrame(list(db["scraper_news_worldnewsapi_logs"].find(
+        {}, {"_id": 0, "start_date": 1, "record_count": 1})))
+    worldnewsapi["source"] = "worldnewsapi"
+    if not worldnewsapi.empty:
+        worldnewsapi = worldnewsapi.sort_values(by="start_date")
+
+    xtb = pd.DataFrame(list(db["scraper_news_xtb_logs"].find(
+        {}, {"_id": 0, "start_date": 1, "record_count": 1})))
+    xtb["source"] = "xtb"
+    if not xtb.empty:
+        xtb = xtb.sort_values(by="start_date")
+
+    return pd.concat([newsapi, worldnewsapi, xtb])

@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     if not DEBUG_MODE:
         api_key = os.getenv("NEWSAPI_API_KEY")
-        key_words = ["cocoa", "Ivory Coast"]
+        key_words = ["Africa"]
 
     producer = get_kafka_producer()
 
@@ -62,6 +62,7 @@ if __name__ == "__main__":
                 date_start = add_n_days(date_start, 1, DATE_FORMAT)
                 continue
 
+            print(json_response)
             articles = json_response["articles"]
             parsed_articles = newsapi_parse_articles(articles)
 

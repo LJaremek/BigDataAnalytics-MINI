@@ -480,7 +480,9 @@ def train_and_predict_in_intervals(
             predictions_tensor[torch.isnan(predictions_tensor)] = 0
             batch_predictions = predictions_tensor.tolist()
 
-        for index, (row, pred) in enumerate(zip(batch_data.to_dict(orient="records"), batch_predictions)):
+        for index, (row, pred) in enumerate(
+            zip(batch_data.to_dict(orient="records"), batch_predictions)
+        ):
             index += 1
             prediction_date = row["date_start"].strftime("%Y-%m-%d")
             pred = float(pred) if pred is not None else 0.0
@@ -553,7 +555,6 @@ async def train_and_predict(
     if df.empty:
         return {"message": "No data available for the given date range."}
 
-    # Load the model
     last_date = get_last_model_log(MODEL_NAME)
     if last_date is None:
         last_date = df["date_start"].min().strftime("%Y-%m-%d")
@@ -562,11 +563,9 @@ async def train_and_predict(
     if model is None:
         return {"message": "Model does not exist."}
 
-    # Prepare training parameters
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # Train and predict
     predictions = train_and_predict_in_intervals(
         df=df,
         model=model,

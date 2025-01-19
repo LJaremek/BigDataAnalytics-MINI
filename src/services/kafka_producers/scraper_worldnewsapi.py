@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     if not DEBUG_MODE:
         api_key = os.getenv("WORLDNEWSAPI_API_KEY")
-        key_word = "cocoa"
+        key_word = "Africa"
 
     producer = get_kafka_producer()
 

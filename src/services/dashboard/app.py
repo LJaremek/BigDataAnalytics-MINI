@@ -7,7 +7,8 @@ import pandas as pd
 
 from tools import get_data_means
 from tools_agregator import (
-    get_mongo_news, get_predicted_and_real_open, get_mongo_weather
+    get_mongo_news, get_predicted_and_real_open, get_mongo_weather,
+    get_weather_from_logs
 )
 
 app = Dash(__name__)
@@ -21,14 +22,23 @@ app.layout = html.Div([
     html.Hr(style={"border": "1px solid black", "marginBottom": "20px"}),
     dcc.Interval(
         id="interval-component",
-        interval=5000,  # Refresh every 5 seconds
+        interval=5000,
         n_intervals=0
     ),
     html.Div([
+        # dcc.Graph(
+        #     id="news-line-chart",
+        #     style={
+        #         "height": "300px", "width": "48%", "display": "inline-block",
+        #     }
+        # ),
         dcc.Graph(
-            id="news-line-chart",
+            id="news-logs-line-chart",
             style={
-                "height": "300px", "width": "48%", "display": "inline-block",
+                "height": "300px",
+                "width": "48%",
+                "display": "inline-block",
+                "marginLeft": "4%"
             }
         ),
         html.Div([
@@ -53,7 +63,7 @@ app.layout = html.Div([
         "justifyContent": "space-between",
         "marginTop": "20px"
     }),
-    html.Div([  # Adjust this container
+    html.Div([
         html.Div(
             id="stats-output",
             style={
@@ -77,9 +87,46 @@ app.layout = html.Div([
     ], style={
         "display": "flex",
         "alignItems": "center",
-        "marginTop": "100px"  # Increased marginTop to add more space
+        "marginTop": "100px"
     })
 ])
+
+
+@app.callback(
+    Output("news-logs-line-chart", "figure"),
+    [Input("interval-component", "n_intervals")]
+)
+def update_news_logs_chart(n):
+    weather_logs_data = get_weather_from_logs()
+    if weather_logs_data.empty:
+        return px.scatter(title="No data for News Logs")
+
+    fig = px.line(
+        weather_logs_data,
+        x="start_date",
+        y="record_count",
+        color="source",
+        title="News Logs Over Time",
+        labels={
+            "start_date": "Date",
+            "record_count": "Record Count",
+            "source": "Source"
+        }
+    )
+
+    fig.update_layout(
+        title="News Logs Over Time",
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.4,
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(l=40, r=40, t=40, b=60)
+    )
+
+    return fig
 
 
 @app.callback(
@@ -189,11 +236,11 @@ def update_weather_chart(n):
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.4,  # Przesunięcie legendy poniżej wykresu
+            y=-0.4,
             xanchor="center",
             x=0.5
         ),
-        margin=dict(l=40, r=40, t=40, b=60)  # Większy dolny margines dla legendy
+        margin=dict(l=40, r=40, t=40, b=60)
     )
 
     return fig
@@ -213,7 +260,6 @@ def update_news_chart(n):
         x="record_date",
         y="count",
         color="source",
-        # title="Number of news records over time",
         labels={
             "record_date": "Date",
             "count": "Number of records",
@@ -238,11 +284,11 @@ def update_news_chart(n):
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.4,  # Przesunięcie legendy poniżej wykresu
+            y=-0.4,
             xanchor="center",
             x=0.5
         ),
-        margin=dict(l=40, r=40, t=40, b=60)  # Większy dolny margines dla legendy
+        margin=dict(l=40, r=40, t=40, b=60)
     )
 
     return fig
@@ -301,11 +347,11 @@ def update_predicted_vs_real_chart(n):
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.2,  # Przesunięcie legendy poniżej wykresu
+            y=-0.2,
             xanchor="center",
             x=0.5
         ),
-        margin=dict(l=40, r=40, t=40, b=60)  # Większy dolny margines dla legendy
+        margin=dict(l=40, r=40, t=40, b=60)
     )
 
     return fig
@@ -326,11 +372,18 @@ def update_stats(n):
     )
 
     return html.Div([
-        html.H3("Average or Median Values", style={"textAlign": "center", "marginBottom": "10px"}),
+        html.H3(
+            "Average or Median Values",
+            style={"textAlign": "center", "marginBottom": "10px"}
+            ),
         html.Table(
             [
                 html.Thead(
-                    html.Tr([html.Th(col, style={"border": "1px solid black"}) for col in stats_df.columns]),
+                    html.Tr(
+                        [
+                            html.Th(col, style={"border": "1px solid black"})
+                            for col in stats_df.columns
+                        ]),
                     style={
                         "backgroundColor": "#d9eaff",
                         "border": "1px solid black",
@@ -340,11 +393,16 @@ def update_stats(n):
                 html.Tbody([
                     html.Tr(
                         [
-                            html.Td(stats_df.iloc[i][col], style={"border": "1px solid black"})
+                            html.Td(
+                                stats_df.iloc[i][col],
+                                style={"border": "1px solid black"}
+                                )
                             for col in stats_df.columns
                         ],
                         style={
-                            "backgroundColor": "#f2f2f2" if i % 2 == 0 else "#ffffff"
+                            "backgroundColor": "#f2f2f2"
+                            if i % 2 == 0
+                            else "#ffffff"
                         }
                     ) for i in range(len(stats_df))
                 ])
