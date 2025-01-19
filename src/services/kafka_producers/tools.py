@@ -99,3 +99,21 @@ def compare_dates(
         return d1 <= d2
     elif comparation == ">=":
         return d1 >= d2
+
+
+def too_far_in_the_past_newsapi(json_response: dict) -> bool:
+    if json_response["status"] == "error":
+        return (
+            json_response["message"][:54] ==
+            "You are trying to request results too far in the past."
+        )
+    return False
+
+
+def too_far_in_the_past_worldnewsapi(json_response: dict) -> bool:
+    if "status" in json_response and json_response["status"] == "failure":
+        return (
+            json_response["message"][:65] ==
+            "On the free and starter plan, you cannot look back further than 1"
+        )
+    return False

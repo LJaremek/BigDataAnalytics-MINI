@@ -5,7 +5,10 @@ import os
 from dotenv import load_dotenv
 import requests
 
-from tools import get_kafka_producer, get_date_one_month_ago, add_n_minutes
+from tools import (
+    get_kafka_producer, get_date_one_month_ago, add_n_minutes, add_n_days,
+    too_far_in_the_past_newsapi, compare_dates, current_date
+)
 from mongodb_logging import get_last_scraper_end_date, add_new_scraper_log
 from data_processing.scraping.news_newsapi import (
     newsapi_generate_url, newsapi_parse_articles
@@ -25,7 +28,7 @@ if __name__ == "__main__":
 
     if not DEBUG_MODE:
         api_key = os.getenv("NEWSAPI_API_KEY")
-        key_words = ["cocoa", "Ivory Coast"]
+        key_words = ["Africa"]
 
     producer = get_kafka_producer()
 
@@ -37,7 +40,15 @@ if __name__ == "__main__":
         date_start = last_end_date
     date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
 
-    while True:
+    running = compare_dates(
+        current_date(DATE_FORMAT), date_start, DATE_FORMAT, ">="
+        )
+
+    if not running:
+        print(f"Everything is up to date. Last date: {date_start}.", end=" ")
+        print(f"Current date: {current_date(DATE_FORMAT)}")
+
+    while running:
         print("Time:", date_start, date_end)
         if not DEBUG_MODE:
             url = newsapi_generate_url(
@@ -45,7 +56,14 @@ if __name__ == "__main__":
                 )
 
             response = requests.get(url)
-            articles = json.loads(response.text)["articles"]
+            json_response = json.loads(response.text)
+
+            if too_far_in_the_past_newsapi(json_response):
+                date_start = add_n_days(date_start, 1, DATE_FORMAT)
+                continue
+
+            print(json_response)
+            articles = json_response["articles"]
             parsed_articles = newsapi_parse_articles(articles)
 
             data = {
@@ -68,5 +86,11 @@ if __name__ == "__main__":
 
         date_start = date_end
         date_end = add_n_minutes(date_start, MINUTES)
+
+        if compare_dates(
+                current_date(DATE_FORMAT), date_start, DATE_FORMAT, "<="
+                ):
+            running = False
+            print("[INFO] running = False")
 
         time.sleep(60*MINUTES)

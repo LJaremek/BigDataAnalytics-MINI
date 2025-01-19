@@ -1,5 +1,4 @@
 import time
-import ssl
 import os
 
 from dotenv import load_dotenv
@@ -35,6 +34,10 @@ if __name__ == "__main__":
     running = compare_dates(
         current_date(DATE_FORMAT), date_start, DATE_FORMAT, ">="
         )
+
+    if not running:
+        print(f"Everything is up to date. Last date: {date_start}.", end=" ")
+        print(f"Current date: {current_date(DATE_FORMAT)}")
 
     while running:
         print("Time:", date_start, date_end)

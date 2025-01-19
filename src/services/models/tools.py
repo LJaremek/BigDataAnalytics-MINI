@@ -26,9 +26,13 @@ def add_n_days(
     return new_date.strftime(date_format)
 
 
-def collect_avro_files_to_dataframe(hdfs_client: InsecureClient, base_folder: str) -> pd.DataFrame:
+def collect_avro_files_to_dataframe(
+        hdfs_client: InsecureClient,
+        base_folder: str
+        ) -> pd.DataFrame:
     """
-    Zbiera wszystkie pliki Avro z podfolderów danego folderu na HDFS i buduje ramkę danych.
+    Zbiera wszystkie pliki Avro z podfolderów danego folderu na HDFS
+    i buduje ramkę danych.
 
     :param hdfs_client: Klient HDFS (InsecureClient).
     :param base_folder: Ścieżka do folderu na HDFS.
@@ -37,7 +41,6 @@ def collect_avro_files_to_dataframe(hdfs_client: InsecureClient, base_folder: st
     all_dataframes = []
 
     try:
-        # Pobierz listę podfolderów i plików
         for root, dirs, files in hdfs_client.walk(base_folder):
             for file in files:
                 if file.endswith('.avro'):
@@ -53,7 +56,6 @@ def collect_avro_files_to_dataframe(hdfs_client: InsecureClient, base_folder: st
     except Exception as e:
         print(f"Nie udało się odczytać folderu {base_folder}: {e}")
 
-    # Połącz wszystkie ramki danych
     if all_dataframes:
         full_dataframe = pd.concat(all_dataframes, ignore_index=True)
     else:
@@ -64,8 +66,9 @@ def collect_avro_files_to_dataframe(hdfs_client: InsecureClient, base_folder: st
 
 def clean_text(text):
     """
-    Oczyszcza tekst, usuwając obiekty HTML, dziwne znaki, adresy email, adresy URL
-    i inne niechciane elementy oraz zmieniając tekst na małe litery.
+    Oczyszcza tekst, usuwając obiekty HTML, dziwne znaki,
+    adresy email, adresy URL i inne niechciane elementy
+    oraz zmieniając tekst na małe litery.
 
     :param text: Tekst do oczyszczenia.
     :return: Oczyszczony tekst.
@@ -124,5 +127,57 @@ def merge_dataframes_on_date(df1, df2, df3):
     final_columns = ["ctm", "ctmString", "open", "close", "high", "low", "vol",
                      "date_start", "date_end", "temperature", "rain", "sun",
                      "date", "data", "sentiment", "language"]
+
+    return merged_df[final_columns]
+
+
+def merge_dataframes_with_nulls(
+        df1: pd.DataFrame,
+        df2: pd.DataFrame,
+        df3: pd.DataFrame
+        ) -> pd.DataFrame:
+    """
+    Merges three DataFrames on `date_start` and `date_end` columns,
+    ensuring the result contains all columns from all DataFrames.
+    Maps sentiment, encodes language, and ensures numeric types.
+
+    :param df1: First DataFrame with `date_start` and `date_end`.
+    :param df2: Second DataFrame with `date_start` and `date_end`.
+    :param df3: Third DataFrame with `date_start` and `date_end`.
+    :return: Processed and merged DataFrame.
+    """
+    df1["data"] = df1["data"].apply(clean_text)
+    df1["sentiment"] = df1["data"].apply(get_sentiment)
+    df1["language"] = df1["data"].apply(get_language)
+
+    merged_df = pd.merge(
+        df1, df2, on=["date_start", "date_end"], how="outer"
+        )
+    merged_df = pd.merge(
+        merged_df, df3, on=["date_start", "date_end"], how="outer"
+        )
+
+    numeric_columns = ["ctm", "open", "close", "high", "low", "vol",
+                       "temperature", "rain", "sun"]
+    for col in numeric_columns:
+        if col in merged_df.columns:
+            merged_df[col] = merged_df[col].astype(float, errors="ignore")
+
+    sentiment_mapping = {"pos": 1, "neu": 0, "neg": -1}
+    if 'sentiment' in merged_df.columns:
+        merged_df['sentiment'] = merged_df['sentiment'].map(sentiment_mapping)
+
+    if 'language' in merged_df.columns:
+        label_encoder = LabelEncoder()
+        merged_df['language'] = label_encoder.fit_transform(
+            merged_df['language'].astype(str)
+        )
+
+    final_columns = ["ctm", "ctmString", "open", "close", "high", "low", "vol",
+                     "date_start", "date_end", "temperature", "rain", "sun",
+                     "date", "data", "sentiment", "language"]
+    for col in numeric_columns:
+        if col in merged_df.columns:
+            merged_df[col] = merged_df[col].fillna(merged_df[col].mean())
 
     return merged_df[final_columns]

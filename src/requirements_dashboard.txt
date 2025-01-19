@@ -1,0 +1,8 @@
+dash
+fastavro
+hdfs
+numpy
+pandas
+plotly
+pymongo
+python-dotenv
