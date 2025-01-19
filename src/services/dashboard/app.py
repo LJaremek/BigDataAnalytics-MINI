@@ -6,7 +6,9 @@ import plotly.express as px
 import pandas as pd
 
 from tools import get_data_means
-from tools_agregator import get_mongo_news, get_predicted_and_real_open, get_mongo_weather
+from tools_agregator import (
+    get_mongo_news, get_predicted_and_real_open, get_mongo_weather
+)
 
 app = Dash(__name__)
 

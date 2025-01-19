@@ -90,10 +90,12 @@ def feed_stock(hdfs_client: InsecureClient) -> int:
 
     new_records_stock = find_records_to_add(
         df_stock_hdfs, df_stock_mongo, ["record_date"]
-        )[["record_date", "open"]]
-    print(df_stock_hdfs.shape, df_stock_hdfs.columns)
-    print(df_stock_mongo.shape, df_stock_mongo.columns)
-    print(new_records_stock.shape, new_records_stock.columns)
+        )
+
+    if new_records_stock.shape[0] == 0:
+        return 0
+    new_records_stock = new_records_stock[["record_date", "open"]]
+
     add_stock_to_mongo(new_records_stock)
 
     return new_records_stock.shape[0]

@@ -8,7 +8,10 @@ import requests
 from data_processing.scraping.worldnewsapi_news import (
     worldnewsapi_generate_url, worldnewsapi_parse_news
 )
-from tools import get_kafka_producer, get_date_one_month_ago, add_n_minutes
+from tools import (
+    get_kafka_producer, get_date_one_month_ago, add_n_minutes, add_n_days,
+    too_far_in_the_past_worldnewsapi, compare_dates, current_date
+)
 from mongodb_logging import get_last_scraper_end_date, add_new_scraper_log
 
 SCRAPER_NAME = "scraper_news_worldnewsapi"
@@ -37,7 +40,15 @@ if __name__ == "__main__":
     print("[START]", date_start)
     date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
 
-    while True:
+    running = compare_dates(
+        current_date(DATE_FORMAT), date_start, DATE_FORMAT, ">="
+        )
+
+    if not running:
+        print(f"Everything is up to date. Last date: {date_start}.", end=" ")
+        print(f"Current date: {current_date(DATE_FORMAT)}")
+
+    while running:
         print("Time:", date_start, date_end)
         if not DEBUG_MODE:
             url = worldnewsapi_generate_url(
@@ -47,7 +58,15 @@ if __name__ == "__main__":
                 )
 
             response = requests.get(url)
-            articles = json.loads(response.text)["news"]
+            json_response = json.loads(response.text)
+            print(json_response)
+
+            if too_far_in_the_past_worldnewsapi(json_response):
+                date_start = add_n_days(date_start, 1, DATE_FORMAT)
+                print("[i] Too far in the past. Add 1 day")
+                continue
+
+            articles = json_response["news"]
             parsed_articles = worldnewsapi_parse_news(articles)
 
             data = {
@@ -72,5 +91,11 @@ if __name__ == "__main__":
 
         date_start = date_end
         date_end = add_n_minutes(date_start, MINUTES, DATE_FORMAT)
+
+        if compare_dates(
+                current_date(DATE_FORMAT), date_start, DATE_FORMAT, "<="
+                ):
+            running = False
+            print("[INFO] running = False")
 
         time.sleep(60*MINUTES)

@@ -35,6 +35,10 @@ if __name__ == "__main__":  # CRON JOB
         current_date(DATE_FORMAT), date_start, DATE_FORMAT, ">="
         )
 
+    if not running:
+        print(f"Everything is up to date. Last date: {date_start}.", end=" ")
+        print(f"Current date: {current_date(DATE_FORMAT)}")
+
     while running:
         weather = get_weather(date_start, date_end, "cocoa")
         the_time = time.strftime(DATE_FORMAT)

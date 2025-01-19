@@ -137,7 +137,7 @@ def get_mongo_stock() -> pd.DataFrame:
 
     client = MongoClient(f"mongodb://{root_name}:{root_pswd}@mongodb:27017/")
     db = client["data"]
-    collection = db["real_mongo"]
+    collection = db["real_open"]
 
     records = list(collection.find({}, {
         "_id": 0, "record_date": 1, "open": 1
