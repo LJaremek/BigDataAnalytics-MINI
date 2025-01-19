@@ -77,7 +77,6 @@ if __name__ == "__main__":
                         ):
                             schema = AVRO_SCHEMAS[source]
                             avro_data = batches[source].records
-                            print(avro_data)
                             writer(w_output, schema, avro_data)
                         batches[source].reset()
                         break

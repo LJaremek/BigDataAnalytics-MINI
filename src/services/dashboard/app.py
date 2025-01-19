@@ -53,7 +53,7 @@ app.layout = html.Div([
         "justifyContent": "space-between",
         "marginTop": "20px"
     }),
-    html.Div([
+    html.Div([  # Adjust this container
         html.Div(
             id="stats-output",
             style={
@@ -77,7 +77,7 @@ app.layout = html.Div([
     ], style={
         "display": "flex",
         "alignItems": "center",
-        "marginTop": "20px"
+        "marginTop": "100px"  # Increased marginTop to add more space
     })
 ])
 
@@ -106,6 +106,18 @@ def update_rainfall_chart(n):
     fig.update_layout(
         margin=dict(l=40, r=40, t=40, b=40),
         height=300
+    )
+
+    fig.update_layout(
+        title="Rainfall Over Time",
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.4,
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(l=40, r=40, t=40, b=60)
     )
 
     return fig
@@ -172,6 +184,18 @@ def update_weather_chart(n):
         margin=dict(l=40, r=40, t=40, b=40)
     )
 
+    fig.update_layout(
+        title="Weather Data Over Time",
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.4,  # Przesunięcie legendy poniżej wykresu
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(l=40, r=40, t=40, b=60)  # Większy dolny margines dla legendy
+    )
+
     return fig
 
 
@@ -208,6 +232,19 @@ def update_news_chart(n):
         margin=dict(l=40, r=40, t=40, b=40),
         height=300
     )
+
+    fig.update_layout(
+        title="Number of news records over time",
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.4,  # Przesunięcie legendy poniżej wykresu
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(l=40, r=40, t=40, b=60)  # Większy dolny margines dla legendy
+    )
+
     return fig
 
 
@@ -220,26 +257,57 @@ def update_predicted_vs_real_chart(n):
     if data.empty:
         return px.scatter(title="No data for Predicted vs Real")
 
-    melted_data = pd.melt(
-        data,
-        id_vars="record_date",
-        value_vars=["predicted_open", "real_open"],
-        var_name="Type",
-        value_name="Value"
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig.add_trace(
+        go.Scatter(
+            x=data["record_date"],
+            y=data["real_open"],
+            mode="lines",
+            name="Real Open",
+            line=dict(color="blue")
+        ),
+        secondary_y=False
     )
 
-    fig = px.line(
-        melted_data,
-        x="record_date",
-        y="Value",
-        color="Type",
-        title="Predicted vs Real Open Values Over Time",
-        labels={
-            "record_date": "Date",
-            "Value": "Open Value",
-            "Type": "Data Type"
-        }
+    fig.add_trace(
+        go.Scatter(
+            x=data["record_date"],
+            y=data["predicted_open"],
+            mode="lines",
+            name="Predicted Open",
+            line=dict(color="orange")
+        ),
+        secondary_y=True
     )
+
+    fig.update_yaxes(
+        title_text="Real Open Value",
+        secondary_y=False,
+        showgrid=True,
+        zeroline=True
+    )
+    fig.update_yaxes(
+        title_text="Predicted Open Value",
+        secondary_y=True,
+        showgrid=False,
+        showticklabels=False
+    )
+
+    fig.update_xaxes(title_text="Date")
+
+    fig.update_layout(
+        title="Predicted vs Real Open Values Over Time",
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2,  # Przesunięcie legendy poniżej wykresu
+            xanchor="center",
+            x=0.5
+        ),
+        margin=dict(l=40, r=40, t=40, b=60)  # Większy dolny margines dla legendy
+    )
+
     return fig
 
 
@@ -257,15 +325,36 @@ def update_stats(n):
         columns=["Parameter", "Value"]
     )
 
-    return html.Table([
-        html.Thead(html.Tr([html.Th(col) for col in stats_df.columns])),
-        html.Tbody([
-            html.Tr([
-                html.Td(stats_df.iloc[i][col])
-                for col in stats_df.columns
-            ])
-            for i in range(len(stats_df))
-        ])
+    return html.Div([
+        html.H3("Average or Median Values", style={"textAlign": "center", "marginBottom": "10px"}),
+        html.Table(
+            [
+                html.Thead(
+                    html.Tr([html.Th(col, style={"border": "1px solid black"}) for col in stats_df.columns]),
+                    style={
+                        "backgroundColor": "#d9eaff",
+                        "border": "1px solid black",
+                        "textAlign": "center"
+                    }
+                ),
+                html.Tbody([
+                    html.Tr(
+                        [
+                            html.Td(stats_df.iloc[i][col], style={"border": "1px solid black"})
+                            for col in stats_df.columns
+                        ],
+                        style={
+                            "backgroundColor": "#f2f2f2" if i % 2 == 0 else "#ffffff"
+                        }
+                    ) for i in range(len(stats_df))
+                ])
+            ],
+            style={
+                "borderCollapse": "collapse",
+                "width": "100%",
+                "textAlign": "center"
+            }
+        )
     ])
 
 

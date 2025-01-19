@@ -97,7 +97,9 @@ def save_model_to_hdfs(
         ) -> None:
 
     try:
-        with hdfs_client.write(hdfs_path, encoding=None) as writer:
+        with hdfs_client.write(
+            hdfs_path, encoding=None, overwrite=True
+        ) as writer:
             pickle.dump(model, writer)
         print("Model saved successfully to HDFS.")
     except Exception as e:

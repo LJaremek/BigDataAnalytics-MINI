@@ -126,3 +126,55 @@ def merge_dataframes_on_date(df1, df2, df3):
                      "date", "data", "sentiment", "language"]
 
     return merged_df[final_columns]
+
+
+def merge_dataframes_with_nulls(
+        df1: pd.DataFrame,
+        df2: pd.DataFrame,
+        df3: pd.DataFrame
+        ) -> pd.DataFrame:
+    """
+    Merges three DataFrames on `date_start` and `date_end` columns,
+    ensuring the result contains all columns from all DataFrames.
+    Maps sentiment, encodes language, and ensures numeric types.
+
+    :param df1: First DataFrame with `date_start` and `date_end`.
+    :param df2: Second DataFrame with `date_start` and `date_end`.
+    :param df3: Third DataFrame with `date_start` and `date_end`.
+    :return: Processed and merged DataFrame.
+    """
+    df1["data"] = df1["data"].apply(clean_text)
+    df1["sentiment"] = df1["data"].apply(get_sentiment)
+    df1["language"] = df1["data"].apply(get_language)
+
+    merged_df = pd.merge(
+        df1, df2, on=["date_start", "date_end"], how="outer"
+        )
+    merged_df = pd.merge(
+        merged_df, df3, on=["date_start", "date_end"], how="outer"
+        )
+
+    numeric_columns = ["ctm", "open", "close", "high", "low", "vol",
+                       "temperature", "rain", "sun"]
+    for col in numeric_columns:
+        if col in merged_df.columns:
+            merged_df[col] = merged_df[col].astype(float, errors="ignore")
+
+    sentiment_mapping = {"pos": 1, "neu": 0, "neg": -1}
+    if 'sentiment' in merged_df.columns:
+        merged_df['sentiment'] = merged_df['sentiment'].map(sentiment_mapping)
+
+    if 'language' in merged_df.columns:
+        label_encoder = LabelEncoder()
+        merged_df['language'] = label_encoder.fit_transform(
+            merged_df['language'].astype(str)
+        )
+
+    final_columns = ["ctm", "ctmString", "open", "close", "high", "low", "vol",
+                     "date_start", "date_end", "temperature", "rain", "sun",
+                     "date", "data", "sentiment", "language"]
+    for col in numeric_columns:
+        if col in merged_df.columns:
+            merged_df[col] = merged_df[col].fillna(merged_df[col].mean())
+
+    return merged_df[final_columns]

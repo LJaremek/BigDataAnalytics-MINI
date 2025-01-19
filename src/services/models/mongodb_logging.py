@@ -100,6 +100,6 @@ def log_predicted_open(date: str, value: float) -> None:
     collection = db["predicted_open"]
 
     collection.insert_one({
-        "the_date": date,
+        "record_date": date,
         "open": value
     })
