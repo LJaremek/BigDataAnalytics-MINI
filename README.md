@@ -96,8 +96,15 @@ http://localhost:8081
 
 
 ### Model API
-Treining:
+Training:
 http://localhost:8000/train/
+
+Training with real-time view:
+http://localhost:8000/train_stream/?epochs=100
 
 Sample prediction
 http://localhost:8000/predict/?open=11500.0&close=11450.0&high=11600.0&low=11300.0&vol=7500.0&temperature=20.5&rain=0.2&sun=4500.0&sentiment=1.0&language=0.0
+
+Regenerate historical predictions
+http://localhost:8000/predict_history/?start_date=2024-1-17&end_date=2025-01-14
+http://localhost:8000/train_and_predict/?start_date=2024-1-17&end_date=2025-01-14&epochs=1000
