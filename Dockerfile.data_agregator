@@ -9,4 +9,6 @@ COPY .env /app/
 
 COPY src/services/dashboard/ /app/
 
+ENV PYTHONUNBUFFERED=1
+
 CMD ["python", "data_agregator.py"]

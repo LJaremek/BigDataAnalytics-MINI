@@ -85,7 +85,7 @@ def add_stock_to_mongo(dataframe: pd.DataFrame) -> None:
 
     client = MongoClient(f"mongodb://{root_name}:{root_pswd}@mongodb:27017/")
     db = client["data"]
-    collection = db["stock"]
+    collection = db["real_open"]
 
     records = dataframe.to_dict(orient="records")
     if records:
@@ -137,11 +137,10 @@ def get_mongo_stock() -> pd.DataFrame:
 
     client = MongoClient(f"mongodb://{root_name}:{root_pswd}@mongodb:27017/")
     db = client["data"]
-    collection = db["stock"]
+    collection = db["real_mongo"]
 
     records = list(collection.find({}, {
-        "_id": 0, "record_date": 1,
-        "open": 1, "close": 1, "high": 1, "low": 1, "vol": 1
+        "_id": 0, "record_date": 1, "open": 1
         }))
     client.close()
 
@@ -217,3 +216,45 @@ def find_records_to_add(
     ].drop(columns="_merge")
 
     return records_to_add
+
+
+def get_predicted_and_real_open() -> pd.DataFrame:
+    load_dotenv()
+    root_name = os.getenv("ROOT_NAME")
+    root_pswd = os.getenv("ROOT_PSWD")
+
+    client = MongoClient(f"mongodb://{root_name}:{root_pswd}@mongodb:27017/")
+    db = client["data"]
+
+    predicted_data = pd.DataFrame(list(db["predicted_open"].find(
+        {}, {"_id": 0, "record_date": 1, "open": 1}))
+        )
+    predicted_data.rename(columns={"open": "predicted_open"}, inplace=True)
+
+    real_data = pd.DataFrame(list(db["real_open"].find(
+        {}, {"_id": 0, "record_date": 1, "open": 1}))
+        )
+    real_data.rename(columns={"open": "real_open"}, inplace=True)
+
+    if predicted_data.empty and real_data.empty:
+        return pd.DataFrame(
+            columns=["record_date", "predicted_open", "real_open"]
+            )
+
+    if predicted_data.empty:
+        real_data["predicted_open"] = None
+        return real_data[["record_date", "predicted_open", "real_open"]]
+
+    if real_data.empty:
+        predicted_data["real_open"] = None
+        return predicted_data[["record_date", "predicted_open", "real_open"]]
+
+    combined_data = pd.merge(
+        predicted_data, real_data, on="record_date", how="outer"
+        )
+
+    combined_data["record_date"] = pd.to_datetime(combined_data["record_date"])
+
+    combined_data.sort_values(by="record_date", inplace=True)
+
+    return combined_data

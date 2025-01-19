@@ -1,3 +1,4 @@
+import requests
 from time import sleep
 
 from hdfs import InsecureClient
@@ -12,6 +13,12 @@ from tools_agregator import (
 
 
 MINUTES = 1
+
+
+def is_safemode_on() -> bool:
+    url = "http://namenode:50070/safemode"  # WebHDFS NameNode adress
+    response = requests.get(url)
+    return response.text.lower().strip() == "on"
 
 
 def feed_news(hdfs_client: InsecureClient) -> int:
@@ -29,7 +36,6 @@ def feed_news(hdfs_client: InsecureClient) -> int:
         hdfs_client, "/data/batch_scraper_news_xtb"
     )
     df_news_xtb["source"] = "xtb"
-
     df_news_hdfs = add_record_date(
         pd.concat([df_news_newsapi, df_news_worldnewsapi, df_news_xtb]),
         "date"
@@ -79,19 +85,15 @@ def feed_stock(hdfs_client: InsecureClient) -> int:
         ),
         "date_start",
     )
-    df_stock_hdfs = (
-        df_stock_hdfs.groupby(["record_date"])
-        .agg({
-            "open": "mean", "close": "mean", "high": "max",
-            "low": "min", "vol": "sum"
-        })
-        .reset_index()
-    )
 
     df_stock_mongo = get_mongo_stock()
+
     new_records_stock = find_records_to_add(
         df_stock_hdfs, df_stock_mongo, ["record_date"]
-        )
+        )[["record_date", "open"]]
+    print(df_stock_hdfs.shape, df_stock_hdfs.columns)
+    print(df_stock_mongo.shape, df_stock_mongo.columns)
+    print(new_records_stock.shape, new_records_stock.columns)
     add_stock_to_mongo(new_records_stock)
 
     return new_records_stock.shape[0]
@@ -102,6 +104,10 @@ if __name__ == "__main__":
 
     running = True
     while running:
+        if is_safemode_on():
+            print("SAFE MODE IS ON")
+            sleep(10)
+
         print("[News] New records:", feed_news(hdfs_client))
         print("[Weather] New records:", feed_weather(hdfs_client))
         print("[Stock] New records:", feed_stock(hdfs_client))

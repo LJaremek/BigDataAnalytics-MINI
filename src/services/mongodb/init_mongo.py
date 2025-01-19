@@ -69,7 +69,7 @@ def initialize_database_data(client: MongoClient) -> None:
         db.create_collection("real_open", capped=False)
         collection = db["real_open"]
 
-        collection.create_index("the_date", unique=False)
+        collection.create_index("record_date", unique=False)
         collection.create_index("open", unique=False)
         print("Create new data table: 'real_open'")
     else:
