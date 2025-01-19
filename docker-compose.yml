@@ -79,7 +79,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_CREATE_TOPICS: "scraped_data:1:1"
+      KAFKA_CREATE_TOPICS: "scraped_data:1:1 prediction_data:1:1"
     depends_on:
       - zookeeper
     healthcheck:
@@ -87,6 +87,17 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+
+  # SPEED LAYER
+  speed_layer:
+    build:
+      context: .
+      dockerfile: Dockerfile.speed_layer
+    networks:
+      - kafka
+    depends_on:
+      - kafka
+      - zookeeper
 
   # SCRAPERS
   scraper_news_xtb:
